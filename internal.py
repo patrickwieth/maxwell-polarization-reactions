@@ -24,7 +24,6 @@ k_aab = k_aab0 + alpha_aab P^2 + beta_aab P_a^2
 k_baa = k_baa0 + alpha_baa P^2
 k_abc = k_abc0 + alpha_abc P^2 + beta_abc P_a P_b
 k_cab = k_cab0 + alpha_cab P^2
-
 '''
 
 import numpy as np
@@ -49,18 +48,32 @@ class material_constants:
 		self.tau_b = tau_b
 		self.tau_c = tau_c
 
+		if self.tau_a == 0:
+			print("please don't set relaxation times to 0, if you want instantaneous processes set tau = dt - setting tau_a = 1")
+			self.tau_a = 1
+		if self.tau_b == 0:
+			print("please don't set relaxation times to 0, if you want instantaneous processes set tau = dt - setting tau_b = 1")
+			self.tau_b = 1
+		if self.tau_c == 0:
+			print("please don't set relaxation times to 0, if you want instantaneous processes set tau = dt - setting tau_c = 1")
+			self.tau_c = 1
+
+
 class simulation_parameters:
 	def __init__(self, epsilon_0, c, dx, dt, wave_length):
 		self.C2 = (c * dt / dx)**2 # courant number
+		print('Courant number for this run is: ', self.C2)
 		if self.C2 > 1:	print("Courant number is greater than 1, numerical shittyness unpreventable!")
+
 		self.wave_length = wave_length
 		self.epsilon_0 = epsilon_0
 		self.dt = dt
 		self.dx = dx
 		self.c = c
 
+
 class cell (object):
-	def __init__(self, constants, parameter):
+	def __init__(self, constants, parameter, initial_condition):
 		self.E = 0.0 #np.zeros(3)
 		self.prev_E = 0.0 #np.zeros(3)
 		self.prev2_E = 0.0 #np.zeros(3)
@@ -69,13 +82,13 @@ class cell (object):
 		self.prev_P = 0.0 #np.zeros(3)
 		self.prev2_P = 0.0 #np.zeros(3)
 
-		self.P_a = 0.0 #np.zeros(3)
-		self.P_b = 0.0 #np.zeros(3)
-		self.P_c = 0.0 #np.zeros(3)
+		self.P_a = initial_condition.P_a #np.zeros(3)
+		self.P_b = initial_condition.P_b #np.zeros(3)
+		self.P_c = initial_condition.P_c #np.zeros(3)
 
-		self.n_a = 1.0
-		self.n_b = 0.0
-		self.n_c = 0.0
+		self.n_a = initial_condition.n_a
+		self.n_b = initial_condition.n_b
+		self.n_c = initial_condition.n_c
 
 		self.constants = constants
 		self.parameter = parameter
@@ -91,7 +104,14 @@ class cell (object):
 
 
 	def internal_update_in_general(self, epsilon_0, k_aab0, k_baa0, k_abc0, k_cab0, alpha_aab, alpha_baa, alpha_abc, alpha_cab, beta_aab, beta_abc, epsilon_ra, epsilon_rb, epsilon_rc, tau_a, tau_b, tau_c, dt, left_E, right_E):
+		# write history
+		self.prev2_P = self.prev_P
+		self.prev_P = self.P
 
+		epsilon_rges = self.n_a * epsilon_ra + self.n_b * epsilon_rb + self.n_c * epsilon_rc
+
+		# calculate updates
+		
 		P_squared = np.dot(self.P, self.P)
 
 		k_aab = k_aab0 + alpha_aab * P_squared + beta_aab * np.dot(self.P_a, self.P_a)
@@ -105,11 +125,12 @@ class cell (object):
 		dn_a = -2*r_1 - r_2
 		dn_b = r_1 - r_2
 		dn_c = r_2
+		
+		dP_a = self.n_a*epsilon_ra/epsilon_rges * (epsilon_0 * self.E - self.P)/tau_a
+		dP_b = self.n_b*epsilon_rb/epsilon_rges * (epsilon_0 * self.E - self.P)/tau_b
+		dP_c = self.n_c*epsilon_rc/epsilon_rges * (epsilon_0 * self.E - self.P)/tau_c
 
-		dP_a = 1/tau_a * (epsilon_0 * self.n_a * epsilon_ra * self.E - self.P_a)
-		dP_b = 1/tau_b * (epsilon_0 * self.n_b * epsilon_rb * self.E - self.P_b) #+ r_1 * dP_aab * self.P_a
-		dP_c = 1/tau_c * (epsilon_0 * self.n_c * epsilon_rc * self.E - self.P_c) #+ r_2 * dP_abc 
-
+		# apply updates
 		self.n_a += dn_a * dt
 		self.n_b += dn_b * dt
 		self.n_c += dn_c * dt
@@ -118,36 +139,10 @@ class cell (object):
 		self.P_b += dP_b * dt
 		self.P_c += dP_c * dt
 
-		'''
-		self.prev2_P[:] = self.prev_P
-		self.prev_P[:] = self.P
-		self.prev2_E[:] = self.prev_E
-		self.prev_E[:] = self.E
-		'''
+		self.P = self.P_a + self.P_b + self.P_c
 
-		self.prev2_P = self.prev_P
-		self.prev_P  = self.P
-		self.prev2_E = self.prev_E
-		self.prev_E  = self.E
+		#print(self.n_a, self.n_b, self.n_c)
 
-		#next_E = E_xx * self.C2 - 1/e0 * P_tt  - prev_E + 2 E
-
-		#print(left_E, self.E, right_E, self.prev2_P, self.prev_P, self.P, self.prev2_E, self.prev_E)
-
-		#self.P[:] = self.P_a + self.P_b + self.P_c	
-		#self.P = self.P_a + self.P_b + self.P_c	
-
-		self.P += (self.parameter.epsilon_0 * self.E - self.P)/self.constants.tau_a
-
-		#self.E[:] = (left_E - 2*self.E + right_E)*self.parameter.C2 - (self.prev2_P - 2*self.prev_P + self.P)/self.parameter.epsilon_0 - self.prev2_E + 2*self.prev_E
-		
-
-		P_tt = (self.prev2_P - 2*self.prev_P + self.P)/(self.parameter.dt**2)
-		E_xx = (left_E - 2*self.E + right_E)/(self.parameter.dx**2)
-		t_derivative = self.parameter.c**2 * E_xx - 1/self.parameter.epsilon_0 * P_tt
-
-		#self.E[:] = t_derivative * (self.parameter.dt**2) - self.prev2_E + 2*self.prev_E
-		self.E = t_derivative * (self.parameter.dt**2) - self.prev2_E + 2*self.prev_E
 
 
 
