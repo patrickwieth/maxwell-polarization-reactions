@@ -47,7 +47,7 @@ class material_constants:
 		self.tau_a = tau_a
 		self.tau_b = tau_b
 		self.tau_c = tau_c
-
+		
 		if self.tau_a == 0:
 			print("please don't set relaxation times to 0, if you want instantaneous processes set tau = dt - setting tau_a = 1")
 			self.tau_a = 1
@@ -57,7 +57,7 @@ class material_constants:
 		if self.tau_c == 0:
 			print("please don't set relaxation times to 0, if you want instantaneous processes set tau = dt - setting tau_c = 1")
 			self.tau_c = 1
-
+		
 
 class simulation_parameters:
 	def __init__(self, epsilon_0, c, dx, dt, wave_length):
@@ -118,6 +118,15 @@ class cell (object):
 		k_baa = k_baa0 + alpha_baa * P_squared
 		k_abc = k_abc0 + alpha_abc * P_squared + beta_abc * np.dot(self.P_a, self.P_b)
 		k_cab = k_cab0 + alpha_cab * P_squared
+
+		if k_aab < 0:
+			print("k_aab < 0")
+		if k_baa < 0:
+			print("k_baa < 0")
+		if k_abc < 0:
+			print("k_abc < 0")
+		if k_cab < 0:
+			print("k_cab < 0")
 
 		r_1 = k_aab * self.n_a**2 - k_baa * self.n_b
 		r_2 = k_abc * self.n_a * self.n_b - k_cab * self.n_c
