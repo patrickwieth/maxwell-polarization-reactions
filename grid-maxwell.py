@@ -73,10 +73,6 @@ class grid:
 				cell.E = t_derivative - cell.prev2_E + 2*cell.prev_E
 
 
-	def set_border_Efield(self, time):
-		self.cells[ 0].E = 0.0 #np.zeros(3)
-		self.cells[-1].E = 0.0 #np.zeros(3)
-
 	def run(self, steps, saveInterval):
 
 		self.set_inital_Efield()
@@ -97,7 +93,6 @@ class grid:
 
 			self.update_Efield(iteration)
 			
-			#self.set_border_Efield(iteration*self.parameters.dt)
 
 			if(iteration % saveInterval == 0):
 				for idx, cell in enumerate(self.cells):					

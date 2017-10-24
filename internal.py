@@ -30,7 +30,7 @@ import numpy as np
 from functools import partial
 
 class material_constants:
-	def __init__(self, k_aab0, k_baa0, k_abc0, k_cab0, alpha_aab, alpha_baa, alpha_abc, alpha_cab, beta_aab, beta_abc, epsilon_ra, epsilon_rb, epsilon_rc, tau_a, tau_b, tau_c):
+	def __init__(self, k_aab0, k_baa0, k_abc0, k_cab0, alpha_aab, alpha_baa, alpha_abc, alpha_cab, beta_aab, beta_abc, epsilon_ra, epsilon_rb, epsilon_rc, tau_a, tau_b, tau_c, D_a, D_b, D_c):
 		self.k_aab0 =  k_aab0
 		self.k_baa0 = k_baa0
 		self.k_abc0 = k_abc0
@@ -47,6 +47,9 @@ class material_constants:
 		self.tau_a = tau_a
 		self.tau_b = tau_b
 		self.tau_c = tau_c
+		self.D_a = D_a
+		self.D_b = D_b
+		self.D_c = D_c
 		
 		if self.tau_a == 0:
 			print("please don't set relaxation times to 0, if you want instantaneous processes set tau = dt - setting tau_a = 1")
@@ -75,8 +78,6 @@ class simulation_parameters:
 class cell (object):
 	def __init__(self, constants, parameter, initial_condition):
 		self.E = 0.0 #np.zeros(3)
-		self.prev_E = 0.0 #np.zeros(3)
-		self.prev2_E = 0.0 #np.zeros(3)
 
 		self.P = 0.0 #np.zeros(3)
 		self.prev_P = 0.0 #np.zeros(3)
@@ -102,8 +103,10 @@ class cell (object):
 			constants.tau_a, constants.tau_b, constants.tau_c, 
 			parameter.dt)
 
+		self.neighbors = []
 
-	def internal_update_in_general(self, epsilon_0, k_aab0, k_baa0, k_abc0, k_cab0, alpha_aab, alpha_baa, alpha_abc, alpha_cab, beta_aab, beta_abc, epsilon_ra, epsilon_rb, epsilon_rc, tau_a, tau_b, tau_c, dt, left_E, right_E):
+
+	def internal_update_in_general(self, epsilon_0, k_aab0, k_baa0, k_abc0, k_cab0, alpha_aab, alpha_baa, alpha_abc, alpha_cab, beta_aab, beta_abc, epsilon_ra, epsilon_rb, epsilon_rc, tau_a, tau_b, tau_c, dt):
 		# write history
 		self.prev2_P = self.prev_P
 		self.prev_P = self.P
