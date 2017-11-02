@@ -5,10 +5,11 @@ import internal
 
 
 class grid:
-	def __init__(self, constants, parameters, size):
+	def __init__(self, constants, parameters, size, external_field):
 		self.size = size
 		self.parameters = parameters
 		self.constants = constants
+		self.external_field = external_field
 		self.current_step = 0
 		self.cells = np.empty([size, size])
 
@@ -57,8 +58,8 @@ class grid:
 		self.iterate(set_init)
 
 	def update_Efield(self):
-		field = math.sin(self.current_step*self.parameters.dx * 2*math.pi / self.parameters.wave_length)
-		#field = 0.0
+		#field = math.sin(self.current_step*self.parameters.dx * 2*math.pi / self.parameters.wave_length)
+		field = self.external_field
 		#print(field)
 
 		self.cells[ 0, 0].E = field
@@ -74,22 +75,20 @@ class grid:
 
 
 	def apply_diffusion(self):
-		def laplace(cell, observable):
-			result = sum([getattr(neighbor, observable) for neighbor in cell.neighbors])
-			result -= len(cell.neighbors) * getattr(cell, observable)
-			return result / self.parameters.dx**2
 
 		observables = ['n_a', 'n_b', 'n_c']
 		diffusion_coefficients = np.array([getattr(self.constants, stuff) for stuff in ['D_a', 'D_b', 'D_c']])
 
 		def diffuse(cell, idx, idy):
-			laplaces = np.array([laplace(cell, observable) for observable in observables])
-			deltas = laplaces * diffusion_coefficients * self.parameters.dt
-			
-			for obs, delta in zip(observables, deltas):
-				setattr(self.future_cells[idx, idy], obs, getattr(cell, obs) + delta)
+			for idx, obs in enumerate(observables):
+				for neighbor in cell.neighbors:
+					delta = getattr(neighbor, obs) - getattr(cell, obs)
+					flux = delta * diffusion_coefficients[idx] * self.parameters.dt / self.parameters.dx**2
+					setattr(self.future_cells[idx, idy], obs, (getattr(cell, obs) + flux)/2)
+					setattr(self.future_cells[idx, idy], obs, (getattr(cell, obs) - flux)/2)					 
 
 		self.iterate(diffuse)
+
 
 	def internal_update(self):
 		self.iterate(lambda cell, idx, idy: cell.internal_update() )
@@ -128,13 +127,7 @@ class grid:
 		self.iterate(extract_obs)
 		return obs
 
-	
-	def print_mass(self):
-		self.mass = 0
-		def add_mass(cell, idx, idy):
-			self.mass += cell.n_a + 2*cell.n_b + 3*cell.n_c
-		self.iterate(add_mass)
-		print(self.mass)
+
 
 class analyze:
 	def __init__(self, grid):
@@ -154,5 +147,22 @@ class analyze:
 
 		print(self.chi)
 
-	def calculate_total_polarisation():
-		self.P_t = 0
+	def calculate_total_polarisation(self):
+		self.P_t = 0.0
+
+		def collect_P(cell, idx, idy):
+			if cell.E != 0:
+				self.P_t += cell.P
+
+		self.grid.iterate(collect_P)
+
+		print(self.P_t)
+
+	def print_mass(self):
+		self.mass = 0
+		def add_mass(cell, idx, idy):
+			self.mass += cell.n_a + 2*cell.n_b + 3*cell.n_c
+
+		self.grid.iterate(add_mass)
+
+		print(self.mass)
