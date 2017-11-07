@@ -19,9 +19,9 @@ dna = -2 r_1 - r_2 + 3 r_3
 dnb = r_1 - r_2
 dnc = r_2 - r_3
 
-dPa = 1/tau_a (epsilon_0 * n_a * epsilon_ra E - P_a) + dp(2 r_3 - r_1 - 0.5 * r_2)
-dPb = 1/tau_b (epsilon_0 * n_b * epsilon_rb E - P_b) + dp(r_1 - 0.5 * r_2)
-dPc = 1/tau_c (epsilon_0 * n_c * epsilon_rc E - P_c) + dp(r_2 - 2 * r_3
+dPa = 1/tau_a * epsilon_ra/epsilon_rges * (epsilon_0 * n_a * epsilon_ra E - P_a) + dp(2 r_3 - r_1 - 0.5 * r_2)
+dPb = 1/tau_b * epsilon_rb/epsilon_rges * (epsilon_0 * n_b * epsilon_rb E - P_b) + dp(r_1 - 0.5 * r_2)
+dPc = 1/tau_c * epsilon_rc/epsilon_rges * (epsilon_0 * n_c * epsilon_rc E - P_c) + dp(r_2 - 2 * r_3)
 
 P = P_a + P_b + P_c
 
@@ -150,10 +150,10 @@ class cell (object):
 		dn_a = -2*r_1 - r_2 + 3*r_3
 		dn_b = r_1 - r_2
 		dn_c = r_2 - r_3
-		
-		dP_a = self.n_a*epsilon_ra/epsilon_rges * (epsilon_0 * self.E - self.P)/tau_a + dP * (2*r_1 - r_1 - 0.5 * r_2)
-		dP_b = self.n_b*epsilon_rb/epsilon_rges * (epsilon_0 * self.E - self.P)/tau_b + dP * (r_1 - 0.5 * r_2)
-		dP_c = self.n_c*epsilon_rc/epsilon_rges * (epsilon_0 * self.E - self.P)/tau_c + dP * (r_2 - 2 * r_3)
+
+		dP_a = (self.n_a*epsilon_ra/epsilon_rges * epsilon_0 * self.E - self.P_a)/tau_a + dP * (2*r_1 - r_1 - 0.5 * r_2)
+		dP_b = (self.n_b*epsilon_rb/epsilon_rges * epsilon_0 * self.E - self.P_b)/tau_b + dP * (r_1 - 0.5 * r_2)
+		dP_c = (self.n_c*epsilon_rc/epsilon_rges * epsilon_0 * self.E - self.P_c)/tau_c + dP * (r_2 - 2 * r_3)
 
 		# apply updates
 		self.n_a += dn_a * dt

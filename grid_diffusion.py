@@ -5,15 +5,17 @@ import internal
 
 
 class grid:
-	def __init__(self, constants, parameters, size, external_field):
+	def __init__(self, constants, parameters, size, external_fields):
 		self.size = size
 		self.parameters = parameters
 		self.constants = constants
-		self.external_field = external_field
+		self.external_fields = external_fields
 		self.current_step = 0
 		self.cells = np.empty([size, size])
 
 		self.spawn_grid()
+
+		self.set_inital_Efield()
 
 	def iterate(self, fn):
 		for idx, line in enumerate(self.cells):
@@ -25,9 +27,9 @@ class grid:
 			self.P_a = 0
 			self.P_b = 0
 			self.P_c = 0
-			self.n_a = random.uniform(0, 1)
-			self.n_b = 0
-			self.n_c = 0
+			self.n_a = 0.1 #random.uniform(0, 1)
+			self.n_b = 0.15
+			self.n_c = 0.2
 			return self
 
 		self.cells = np.array([
@@ -50,45 +52,42 @@ class grid:
 
 		self.future_cells = np.copy(self.cells)
 
-
 	def set_inital_Efield(self):
 		def set_init(cell, idx, idy):
 			cell.E = 0.0 #math.sin(idx*self.parameters.dx * 2*math.pi / self.parameters.wave_length) #np.array([0.0, math.sin(idx*self.parameters.dx * 2*math.pi / self.parameters.wave_length), 0.0])
 			
 		self.iterate(set_init)
 
-	def update_Efield(self):
-		#field = math.sin(self.current_step*self.parameters.dx * 2*math.pi / self.parameters.wave_length)
-		field = self.external_field
-		#print(field)
-
-		self.cells[ 0, 0].E = field
-		self.cells[-1, 0].E = field
-		
-		# calculate difference of E-Field between Borders
-		delta_E = (self.cells[0, 0].E - self.cells[-1, 0].E)/self.size
-
+	def apply_external_fields(self):
 		def set_E(cell, idx, idy):
-			cell.E = self.cells[0, 0].E #+ idx * delta_E
+			self.future_cells[idx, idy].E = self.external_fields[0].get_strength(self.current_step*self.parameters.dt)
+			cell.E = self.external_fields[0].get_strength(self.current_step*self.parameters.dt)
 
 		self.iterate(set_E)
 
-
 	def apply_diffusion(self):
+		def laplace(cell, observable):
+			result = sum([getattr(neighbor, observable) for neighbor in cell.neighbors])
+			result -= len(cell.neighbors) * getattr(cell, observable)
+			return result / self.parameters.dx**2
 
-		observables = ['n_a', 'n_b', 'n_c']
+		concentrations = ['n_a', 'n_b', 'n_c']
+		polarizations = ['P_a', 'P_b', 'P_c']
 		diffusion_coefficients = np.array([getattr(self.constants, stuff) for stuff in ['D_a', 'D_b', 'D_c']])
 
 		def diffuse(cell, idx, idy):
-			for idx, obs in enumerate(observables):
-				for neighbor in cell.neighbors:
-					delta = getattr(neighbor, obs) - getattr(cell, obs)
-					flux = delta * diffusion_coefficients[idx] * self.parameters.dt / self.parameters.dx**2
-					setattr(self.future_cells[idx, idy], obs, (getattr(cell, obs) + flux)/2)
-					setattr(self.future_cells[idx, idy], obs, (getattr(cell, obs) - flux)/2)					 
+			n_laplaces = np.array([laplace(cell, observable) for observable in concentrations])
+			n_deltas = n_laplaces * diffusion_coefficients * self.parameters.dt
+			#p_laplaces = np.array([laplace(cell, observable) for observable in polarizations])
+			#p_deltas = p_laplaces * diffusion_coefficients * self.parameters.dt
+			
+			for obs, delta in zip(concentrations, n_deltas):
+				setattr(self.future_cells[idx, idy], obs, getattr(cell, obs) + delta)
+
+			#for obs, delta in zip(polarizations, p_deltas):
+			#	setattr(self.future_cells[idx, idy], obs, getattr(cell, obs) + delta)
 
 		self.iterate(diffuse)
-
 
 	def internal_update(self):
 		self.iterate(lambda cell, idx, idy: cell.internal_update() )
@@ -103,29 +102,38 @@ class grid:
 		self.cells = np.copy(self.future_cells)
 
 	def evolve(self):
-		self.set_inital_Efield()
 		self.internal_update()
-		self.update_Efield()
+		self.apply_external_fields()
 		self.apply_diffusion()
 		self.make_future_happen()
 			
 
-	def print_state(self):
-		def print_it(cell, idx, idy):
-			print(cell.E, cell.P, cell.n_a, cell.n_b, cell.n_c)
 
-		self.iterate(print_it)
 
-	def get_observables(self):
-		obs = np.empty([5, self.size, self.size])
-		def extract_obs(cell, idx, idy):
-			obs[0, idx, idy] = cell.n_a
-			obs[1, idx, idy] = 2*cell.n_b
-			obs[2, idx, idy] = 3*cell.n_c
-			obs[3, idx, idy] = cell.E
-			obs[4, idx, idy] = cell.P
-		self.iterate(extract_obs)
-		return obs
+
+
+class external_field:
+	def __init__(self, strength, frequency, wave_length):
+		self.strength = strength
+		self.frequency = frequency
+		self.wave_length = wave_length
+
+	def get_strength(self, t):
+		'''
+		self.cells[ 0, 0].E = field
+		self.cells[-1, 0].E = field
+		
+		# calculate difference of E-Field between Borders
+		delta_E = (self.cells[0, 0].E - self.cells[-1, 0].E)/self.size
+
+		def set_E(cell, idx, idy):
+			cell.E = self.cells[0, 0].E #+ idx * delta_E
+		'''
+
+		if self.frequency > 0:
+			return self.strength * math.sin(t * self.frequency * 2*math.pi) #/ self.wave_length)
+		else:
+			return self.strength
 
 
 
@@ -133,19 +141,30 @@ class analyze:
 	def __init__(self, grid):
 		self.chi = 0
 		self.P_T = 0
+
+		self.chi_accumulated = 0
+		
 		self.grid = grid
 
-	def calculate_dielectric_response(self):
+		self.counter = 0
+
+	def calculate_dielectric_response(self, t):
 		self.chi = 0
+		self.counter = 0
 
-		def collect_chi(cell, idx, idy):
-			if cell.E != 0:
-				self.chi += cell.P / cell.E / self.grid.parameters.epsilon_0
+		if(t > 0):
+			def collect_chi(cell, idx, idy):
+				if cell.E != 0:
+					self.chi += cell.P / cell.E / self.grid.parameters.epsilon_0
 
-		self.grid.iterate(collect_chi)
 
+			self.grid.iterate(collect_chi)
+			self.chi = self.chi / (self.grid.size*self.grid.size)
 
-		print(self.chi)
+			self.chi_accumulated += self.chi
+
+			print(self.chi_accumulated / (t-0))
+
 
 	def calculate_total_polarisation(self):
 		self.P_t = 0.0
@@ -166,3 +185,14 @@ class analyze:
 		self.grid.iterate(add_mass)
 
 		print(self.mass)
+
+	def get_observables(self):
+		obs = np.empty([5, self.grid.size, self.grid.size])
+		def extract_obs(cell, idx, idy):
+			obs[0, idx, idy] = cell.P_a
+			obs[1, idx, idy] = 2*cell.P_b
+			obs[2, idx, idy] = 3*cell.P_c
+			obs[3, idx, idy] = cell.E
+			obs[4, idx, idy] = cell.P
+		self.grid.iterate(extract_obs)
+		return obs
