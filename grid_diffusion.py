@@ -1,5 +1,6 @@
 import numpy as np
 import math, random
+import pickle
 
 import internal
 
@@ -27,9 +28,9 @@ class grid:
 			self.P_a = 0
 			self.P_b = 0
 			self.P_c = 0
-			self.n_a = 0.1 #random.uniform(0, 1)
-			self.n_b = 0.15
-			self.n_c = 0.2
+			self.n_a = 1.000 #random.uniform(0, 1)
+			self.n_b = 0.000
+			self.n_c = 0.000
 			return self
 
 		self.cells = np.array([
@@ -78,14 +79,14 @@ class grid:
 		def diffuse(cell, idx, idy):
 			n_laplaces = np.array([laplace(cell, observable) for observable in concentrations])
 			n_deltas = n_laplaces * diffusion_coefficients * self.parameters.dt
-			#p_laplaces = np.array([laplace(cell, observable) for observable in polarizations])
-			#p_deltas = p_laplaces * diffusion_coefficients * self.parameters.dt
+			p_laplaces = np.array([laplace(cell, observable) for observable in polarizations])
+			p_deltas = p_laplaces * diffusion_coefficients * self.parameters.dt
 			
 			for obs, delta in zip(concentrations, n_deltas):
 				setattr(self.future_cells[idx, idy], obs, getattr(cell, obs) + delta)
 
-			#for obs, delta in zip(polarizations, p_deltas):
-			#	setattr(self.future_cells[idx, idy], obs, getattr(cell, obs) + delta)
+			for obs, delta in zip(polarizations, p_deltas):
+				setattr(self.future_cells[idx, idy], obs, getattr(cell, obs) + delta)
 
 		self.iterate(diffuse)
 
@@ -107,8 +108,36 @@ class grid:
 		self.apply_diffusion()
 		self.make_future_happen()
 			
+	# saves only the state of observables in the cells
+	def save(self, filename):
+		save_cells = np.array([
+				[[
+				self.cells[x,y].P_a, 
+				self.cells[x,y].P_b, 
+				self.cells[x,y].P_c, 
+				self.cells[x,y].n_a, 
+				self.cells[x,y].n_b, 
+				self.cells[x,y].n_c]
+				for x in range(self.size)] 
+			for y in range(self.size)])
 
+		with open(r""+filename, "wb") as output_file:
+			pickle.dump(save_cells, output_file)
 
+	# a valid grid must be constructed when loading
+	def load(self, filename):
+		with open(r""+filename, "rb") as input_file:
+			loaded = pickle.load(input_file)
+
+		def insert_loaded(cell, idx, idy):
+			cell.P_a = loaded[idx, idy, 0]
+			cell.P_b = loaded[idx, idy, 1]
+			cell.P_c = loaded[idx, idy, 2]
+			cell.n_a = loaded[idx, idy, 3]
+			cell.n_b = loaded[idx, idy, 4]
+			cell.n_c = loaded[idx, idy, 5]
+
+		self.iterate(insert_loaded)
 
 
 
@@ -189,9 +218,9 @@ class analyze:
 	def get_observables(self):
 		obs = np.empty([5, self.grid.size, self.grid.size])
 		def extract_obs(cell, idx, idy):
-			obs[0, idx, idy] = cell.P_a
-			obs[1, idx, idy] = 2*cell.P_b
-			obs[2, idx, idy] = 3*cell.P_c
+			obs[0, idx, idy] = cell.n_a
+			obs[1, idx, idy] = 2*cell.n_b
+			obs[2, idx, idy] = 3*cell.n_c
 			obs[3, idx, idy] = cell.E
 			obs[4, idx, idy] = cell.P
 		self.grid.iterate(extract_obs)

@@ -13,7 +13,7 @@ wave_length = 50
 super_simple_material = internal.material_constants(
 					k_aab0 = 0, k_baa0 = 0, k_abc0 = 0, k_cab0 = 0, k_caaa0 = 0,
 					alpha_aab = 0.0, alpha_baa = 0.0, alpha_abc = 0.0, alpha_cab = -0.0, beta_aab = 0, beta_abc = 0,
-					epsilon_ra = 1.0, epsilon_rb = 1.5, epsilon_rc = 2.0, dP = 0.0,
+					epsilon_ra = 1.0, epsilon_rb = 1.0, epsilon_rc = 1.0, dP = 0.0,
 					tau_a = 10.0, tau_b = 15.0, tau_c = 20.0,
 					D_a = 0.2, D_b = 0.1, D_c = 0.01)
 
@@ -21,7 +21,7 @@ super_simple_material = internal.material_constants(
 arbitrary_material = internal.material_constants(
 					k_aab0 = 0.1, k_baa0 = 0.02, k_abc0 = 0.1, k_cab0 = 0.01, k_caaa0 = 0.1,
 					alpha_aab = 0.5, alpha_baa = -0.005, alpha_abc = 0.001, alpha_cab = -0.001, beta_aab = 1, beta_abc = 1,
-					epsilon_ra = 1.0, epsilon_rb = 1.5, epsilon_rc = 2.0, dP = 1.0,
+					epsilon_ra = 1.0, epsilon_rb = 2.0, epsilon_rc = 3.0, dP = 1.0,
 					tau_a = 10.0, tau_b = 15.0, tau_c = 20.0,
 					D_a = 0.2, D_b = 0.1, D_c = 0.01)
 
@@ -36,6 +36,9 @@ simulation = grid_diffusion.grid(arbitrary_material, arbitrary_environment, size
 observe = grid_diffusion.analyze(simulation)
 
 
+simulation.load("bla")
+
+
 
 subplots = 5
 
@@ -46,10 +49,6 @@ fig, axes, = plt.subplots(1, subplots, sharex='col', sharey='row')
 
 
 def get_obs(n):
-	#observe.calculate_total_polarisation()
-	
-	#print(simulation.current_step)
-	#observe.print_mass()
 	return observe.get_observables()[n]
 
 
@@ -57,10 +56,20 @@ im = [axes[n].imshow(get_obs(n), cmap=plt.get_cmap('viridis'), animated=True, in
 [fig.colorbar(im[n],ax=axes[n]) for n in range(subplots)]
 
 
+
+
+
 def updatefig(*args):
 	simulation.evolve()
+	if simulation.current_step == 10:
+		simulation.save("bla")
 
-	observe.calculate_dielectric_response(simulation.current_step)
+	#observe.calculate_dielectric_response(simulation.current_step)
+	observe.calculate_total_polarisation()
+	
+	#print(simulation.current_step)
+	#observe.print_mass()
+	
 
 	[im[n].set_array(get_obs(n)) for n in range(subplots)]
 
