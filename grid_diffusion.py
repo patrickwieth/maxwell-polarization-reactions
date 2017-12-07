@@ -4,6 +4,7 @@ import pickle
 
 import internal
 
+# TODO: relax Diffusion, cooperate Polarization
 
 class grid:
 	def __init__(self, constants, parameters, size, external_fields):
@@ -13,24 +14,47 @@ class grid:
 		self.external_fields = external_fields
 		self.current_step = 0
 		self.cells = np.empty([size, size])
+		self.q = 1
 
 		self.spawn_grid()
 
 		self.set_inital_Efield()
 
-	def iterate(self, fn):
+	def iterate(self, fn):	
 		for idx, line in enumerate(self.cells):
 			for idy, cell in enumerate(line):
 				fn(cell, idx, idy)
 
+	'''
+	# this helper function is needed because map() can only be used for functions
+	# that take a single argument (see http://stackoverflow.com/q/5442910/1461210)
+	def splat_f(args):
+	    return f(*args)
+
+	# a pool of 8 worker processes
+	pool = Pool(8)
+
+	def parallel(M, N):
+	    results = pool.map(splat_f, ((i, j) for i in range(M) for j in range(N)))
+	    return np.array(results).reshape(M, N)
+
+	# applies fn to all cells and returns the resulting grid
+	def iterateToFuture(self, fn):
+		# prepare the work, strip cells and their neighbors off their class stuff
+		for idx, line in enumerate(self.cells):
+			for idy, cell in enumerate(line):
+				
+				self.future_cells[idx, idy] = fn(cell, idx, idy)
+	'''
+
 	def spawn_grid(self):
 		def init_function(x):
-			self.P_a = 0
+			self.P_a = random.uniform(0, 1)
 			self.P_b = 0
 			self.P_c = 0
-			self.n_a = 1.000 #random.uniform(0, 1)
-			self.n_b = 0.000
-			self.n_c = 0.000
+			self.n_a = random.uniform(0, 1)
+			self.n_b = 0.0
+			self.n_c = 0.0
 			return self
 
 		self.cells = np.array([
@@ -60,6 +84,7 @@ class grid:
 		self.iterate(set_init)
 
 	def apply_external_fields(self):
+
 		def set_E(cell, idx, idy):
 			self.future_cells[idx, idy].E = self.external_fields[0].get_strength(self.current_step*self.parameters.dt)
 			cell.E = self.external_fields[0].get_strength(self.current_step*self.parameters.dt)
@@ -74,13 +99,14 @@ class grid:
 
 		concentrations = ['n_a', 'n_b', 'n_c']
 		polarizations = ['P_a', 'P_b', 'P_c']
-		diffusion_coefficients = np.array([getattr(self.constants, stuff) for stuff in ['D_a', 'D_b', 'D_c']])
+		diffusion_coefficients = np.array([getattr(self.constants, stuff) for stuff in ['D_na', 'D_nb', 'D_nc']])
+		polarization_diffusion_coefficients = np.array([getattr(self.constants, stuff) for stuff in ['D_Pa', 'D_Pb', 'D_Pc']])
 
 		def diffuse(cell, idx, idy):
 			n_laplaces = np.array([laplace(cell, observable) for observable in concentrations])
 			n_deltas = n_laplaces * diffusion_coefficients * self.parameters.dt
 			p_laplaces = np.array([laplace(cell, observable) for observable in polarizations])
-			p_deltas = p_laplaces * diffusion_coefficients * self.parameters.dt
+			p_deltas = p_laplaces * polarization_diffusion_coefficients * self.parameters.dt
 			
 			for obs, delta in zip(concentrations, n_deltas):
 				setattr(self.future_cells[idx, idy], obs, getattr(cell, obs) + delta)
@@ -124,6 +150,8 @@ class grid:
 		with open(r""+filename, "wb") as output_file:
 			pickle.dump(save_cells, output_file)
 
+		print("saved state to", filename)
+
 	# a valid grid must be constructed when loading
 	def load(self, filename):
 		with open(r""+filename, "rb") as input_file:
@@ -138,7 +166,7 @@ class grid:
 			cell.n_c = loaded[idx, idy, 5]
 
 		self.iterate(insert_loaded)
-
+		print("loaded file", filename)
 
 
 class external_field:
@@ -201,6 +229,9 @@ class analyze:
 		def collect_P(cell, idx, idy):
 			if cell.E != 0:
 				self.P_t += cell.P
+				#self.P_t += cell.P_a
+				#self.P_t += cell.P_b
+				#self.P_t += cell.P_c
 
 		self.grid.iterate(collect_P)
 
