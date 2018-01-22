@@ -1,15 +1,15 @@
 '''
-	  k_aab
-A + A <===> B, +dP
-	  k_baa
+	       k_aab
+     A + A <===> B, +dP
+	       k_baa
 
-	  k_abc
-A + B <===> C, +dP
-	  k_cab
+	       k_abc
+     A + B <===> C, +dP
+	       k_cab
 
-	  
-	 C ===> A + A + A, -2 dP
-	  k_caaa
+	      k_aaac
+A + A + A <====> C, 2 dP
+	      k_caaa
 
 r_1 = k_aab * n_a^2 - k_baa * n_b
 r_2 = k_abc * n_a * n_b - k_cab n_c
@@ -24,10 +24,10 @@ dPb = 1/tau_b * epsilon_rb/epsilon_rges * (epsilon_0 * n_b * epsilon_rb E - P_b)
 dPc = 1/tau_c * epsilon_rc/epsilon_rges * (epsilon_0 * n_c * epsilon_rc E - P_c) + dp(r_2 - 2 * r_3)
 
 P = P_a + P_b + P_c
-
-k_aab = k_aab0 + alpha_aab P^2 + beta_aab P_a^2
+  
+k_aab = k_aab0 + alpha_aab P^2
 k_baa = k_baa0 + alpha_baa P^2
-k_abc = k_abc0 + alpha_abc P^2 + beta_abc P_a P_b
+k_abc = k_abc0 + alpha_abc P^2
 k_cab = k_cab0 + alpha_cab P^2
 '''
 
@@ -35,7 +35,7 @@ import numpy as np
 from functools import partial
 
 class material_constants:
-	def __init__(self, k_aab0, k_baa0, k_abc0, k_cab0, k_caaa0, k_aaac0, alpha_aab, alpha_baa, alpha_abc, alpha_cab, beta_aab, beta_abc, dP, epsilon_ra, epsilon_rb, epsilon_rc, tau_a, tau_b, tau_c, D_na, D_nb, D_nc, D_Pa, D_Pb, D_Pc):
+	def __init__(self, k_aab0, k_baa0, k_abc0, k_cab0, k_caaa0, k_aaac0, alpha_aab, alpha_baa, alpha_abc, alpha_cab, alpha_aaac, alpha_caaa, dP, epsilon_ra, epsilon_rb, epsilon_rc, tau_a, tau_b, tau_c, D_na, D_nb, D_nc, D_Pa, D_Pb, D_Pc):
 		self.k_aab0 =  k_aab0
 		self.k_baa0 = k_baa0
 		self.k_abc0 = k_abc0
@@ -46,8 +46,8 @@ class material_constants:
 		self.alpha_baa = alpha_baa
 		self.alpha_abc = alpha_abc
 		self.alpha_cab = alpha_cab
-		self.beta_aab = beta_aab
-		self.beta_abc = beta_abc
+		self.alpha_aaac = alpha_aaac
+		self.alpha_caaa = alpha_caaa
 		self.dP = dP
 		self.epsilon_ra = epsilon_ra
 		self.epsilon_rb = epsilon_rb
@@ -74,12 +74,12 @@ class material_constants:
 		
 
 class simulation_parameters:
-	def __init__(self, epsilon_0, c, dx, dt, wave_length):
-		self.C2 = (c * dt / dx)**2 # courant number
+	def __init__(self, epsilon_0, c, dx, dt):
+		#self.C2 = (c * dt / dx)**2 # courant number
 		#print('Courant number for this run is: ', self.C2)
-		if self.C2 > 1:	print("Courant number is greater than 1, numerical shittyness unpreventable!")
+		#if self.C2 > 1:	print("Courant number is greater than 1, numerical shittyness unpreventable!")
 
-		self.wave_length = wave_length
+		#self.wave_length = wave_length
 		self.epsilon_0 = epsilon_0
 		self.dt = dt
 		self.dx = dx
@@ -88,15 +88,12 @@ class simulation_parameters:
 
 class cell (object):
 	def __init__(self, constants, parameter, initial_condition):
-		self.E = 0.0 #np.zeros(3)
+		self.E = 0.0
+		self.P = 0.0
 
-		self.P = 0.0 #np.zeros(3)
-		#self.prev_P = 0.0 #np.zeros(3)
-		#self.prev2_P = 0.0 #np.zeros(3)
-
-		self.P_a = initial_condition.P_a #np.zeros(3)
-		self.P_b = initial_condition.P_b #np.zeros(3)
-		self.P_c = initial_condition.P_c #np.zeros(3)
+		self.P_a = initial_condition.P_a
+		self.P_b = initial_condition.P_b
+		self.P_c = initial_condition.P_c
 
 		self.n_a = initial_condition.n_a
 		self.n_b = initial_condition.n_b
@@ -108,8 +105,7 @@ class cell (object):
 		self.internal_update = partial(self.internal_update_in_general, 
 			parameter.epsilon_0, 
 			constants.k_aab0, constants.k_baa0, constants.k_abc0, constants.k_cab0, constants.k_caaa0, constants.k_aaac0,
-			constants.alpha_aab, constants.alpha_baa, constants.alpha_abc, constants.alpha_cab, 
-			constants.beta_aab, constants.beta_abc, constants.dP,
+			constants.alpha_aab, constants.alpha_baa, constants.alpha_abc, constants.alpha_cab, constants.alpha_aaac, constants.alpha_caaa, constants.dP,
 			constants.epsilon_ra, constants.epsilon_rb, constants.epsilon_rc, 
 			constants.tau_a, constants.tau_b, constants.tau_c, 
 			parameter.dt)
@@ -117,22 +113,21 @@ class cell (object):
 		self.neighbors = []
 
 
-	def internal_update_in_general(self, epsilon_0, k_aab0, k_baa0, k_abc0, k_cab0, k_caaa0, k_aaac0, alpha_aab, alpha_baa, alpha_abc, alpha_cab, beta_aab, beta_abc, dP, epsilon_ra, epsilon_rb, epsilon_rc, tau_a, tau_b, tau_c, dt):
+	def internal_update_in_general(self, epsilon_0, k_aab0, k_baa0, k_abc0, k_cab0, k_caaa0, k_aaac0, alpha_aab, alpha_baa, alpha_abc, alpha_cab, alpha_aaac, alpha_caaa, dP, epsilon_ra, epsilon_rb, epsilon_rc, tau_a, tau_b, tau_c, dt, q):
 		
-
 		epsilon_rges = self.n_a * epsilon_ra + self.n_b * epsilon_rb + self.n_c * epsilon_rc
-		#self.E = q - self.P / epsilon_0 * epsilon_rges
+		self.E = (q - self.P * epsilon_rges)/ epsilon_0
 
 		# calculate updates
 		
 		P_squared = np.dot(self.P, self.P)
 
-		k_aab = k_aab0 + alpha_aab * P_squared + beta_aab * np.dot(self.P_a, self.P_a)
+		k_aab = k_aab0 + alpha_aab * P_squared
 		k_baa = k_baa0 + alpha_baa * P_squared
-		k_abc = k_abc0 + alpha_abc * P_squared + beta_abc * np.dot(self.P_a, self.P_b)
+		k_abc = k_abc0 + alpha_abc * P_squared
 		k_cab = k_cab0 + alpha_cab * P_squared
-		k_caaa = k_caaa0
-		k_aaac = k_aaac0
+		k_caaa = k_caaa0 + alpha_caaa * P_squared
+		k_aaac = k_aaac0 + alpha_aaac * P_squared
 
 		if k_aab < 0:
 			k_aab = 0
@@ -147,13 +142,13 @@ class cell (object):
 			k_cab = 0
 			print("k_cab < 0")
 		
-		r_1 = k_aab * self.n_a**2 - k_baa * self.n_b + k_caaa * self.n_c
+		r_1 = k_aab * self.n_a**2 - k_baa * self.n_b
 		r_2 = k_abc * self.n_a * self.n_b - k_cab * self.n_c
-		r_3 = k_caaa * self.n_c - k_aaac * self.n_a * self.n_a * self.n_a
+		r_3 = k_aaac * self.n_a**3 - k_caaa * self.n_c
 
-		dn_a = -2*r_1 - r_2 + 3*r_3
+		dn_a = -2*r_1 - r_2 - 3*r_3
 		dn_b = r_1 - r_2
-		dn_c = r_2 - r_3
+		dn_c = r_2 + r_3
 
 		'''	normaler turing
 		k = -0.005
