@@ -7,19 +7,18 @@ import internal
 # TODO: relax Diffusion, cooperate Polarization
 
 class grid:
-	def __init__(self, constants, parameters, size, external_fields):
+	def __init__(self, material, environment, size):
 		self.size = size
-		self.parameters = parameters
-		self.constants = constants
-		self.external_fields = external_fields
+		self.parameters = environment
+		self.constants = material
+		#self.external_fields = external_fields
 		self.current_step = 0
-		self.cells = np.empty([size, size])
+		#self.cells = np.empty([size, size])
 		self.dq = 1
 		self.f = 0
 
 		self.spawn_grid()
 
-		#self.set_inital_Efield()
 
 	def iterate(self, fn):	
 		'''
@@ -78,12 +77,12 @@ class grid:
 
 	def apply_external_fields(self):
 
-		self.f = self.parameters.epsilon_0 * self.external_fields[0].get_strength(self.current_step*self.parameters.dt) - self.cells[0].P
+		self.f = self.parameters.epsilon_0 * self.parameters.force_fields[0].get_strength(self.current_step*self.parameters.dt) - self.cells[0].P
 
 		'''
 		def set_E(cell, idx, idy):
-			self.future_cells[idx, idy].E = self.external_fields[0].get_strength(self.current_step*self.parameters.dt)
-			cell.E = self.external_fields[0].get_strength(self.current_step*self.parameters.dt)
+			self.future_cells[idx, idy].E = self.parameters.force_fields[0].get_strength(self.current_step*self.parameters.dt)
+			cell.E = self.parameters.force_fields[0].get_strength(self.current_step*self.parameters.dt)
 
 		self.iterate(set_E)
 		'''
@@ -166,30 +165,6 @@ class grid:
 
 		self.iterate(insert_loaded)
 		if verbose : print("loaded file", filename)
-
-
-class external_field:
-	def __init__(self, strength, frequency, wave_length):
-		self.strength = strength
-		self.frequency = frequency
-		self.wave_length = wave_length
-
-	def get_strength(self, t):
-		'''
-		self.cells[ 0, 0].E = field
-		self.cells[-1, 0].E = field
-		
-		# calculate difference of E-Field between Borders
-		delta_E = (self.cells[0, 0].E - self.cells[-1, 0].E)/self.size
-
-		def set_E(cell, idx, idy):
-			cell.E = self.cells[0, 0].E #+ idx * delta_E
-		'''
-
-		if self.frequency > 0:
-			return self.strength * math.sin(t * self.frequency * 2*math.pi) #/ self.wave_length)
-		else:
-			return self.strength
 
 
 

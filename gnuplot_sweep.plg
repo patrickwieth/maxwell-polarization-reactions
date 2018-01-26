@@ -1,0 +1,9 @@
+f(x) = 0.001*exp(-x/20)
+
+
+set logscale y
+
+plot filename, \
+f(x) with lines linestyle 1
+
+pause -1
