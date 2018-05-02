@@ -1,4 +1,4 @@
-f(x) = 0.001*exp(-x/20)
+f(x) = 0.0007*exp(-x/11)
 
 
 set logscale y

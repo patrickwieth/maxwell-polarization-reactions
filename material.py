@@ -36,7 +36,7 @@ class constants:
 		if self.tau_c == 0:
 			print("please don't set relaxation times to 0, if you want instantaneous processes set tau = dt - setting tau_c = 1")
 			self.tau_c = 1
-		
+
 
 simple = constants(
 					k_aab0 = 0, k_baa0 = 0, k_abc0 = 0, k_cab0 = 0, k_caaa0 = 0, k_aaac0 = 0,

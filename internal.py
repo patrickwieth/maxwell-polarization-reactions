@@ -34,57 +34,6 @@ k_cab = k_cab0 + alpha_cab P^2
 import numpy as np
 from functools import partial
 
-class material_constants:
-	def __init__(self, k_aab0, k_baa0, k_abc0, k_cab0, k_caaa0, k_aaac0, alpha_aab, alpha_baa, alpha_abc, alpha_cab, alpha_aaac, alpha_caaa, dP, epsilon_ra, epsilon_rb, epsilon_rc, tau_a, tau_b, tau_c, D_na, D_nb, D_nc, D_Pa, D_Pb, D_Pc):
-		self.k_aab0 =  k_aab0
-		self.k_baa0 = k_baa0
-		self.k_abc0 = k_abc0
-		self.k_cab0 = k_cab0
-		self.k_caaa0 = k_caaa0
-		self.k_aaac0 = k_aaac0
-		self.alpha_aab = alpha_aab
-		self.alpha_baa = alpha_baa
-		self.alpha_abc = alpha_abc
-		self.alpha_cab = alpha_cab
-		self.alpha_aaac = alpha_aaac
-		self.alpha_caaa = alpha_caaa
-		self.dP = dP
-		self.epsilon_ra = epsilon_ra
-		self.epsilon_rb = epsilon_rb
-		self.epsilon_rc = epsilon_rc
-		self.tau_a = tau_a
-		self.tau_b = tau_b
-		self.tau_c = tau_c
-		self.D_na = D_na
-		self.D_Pa = D_Pa
-		self.D_nb = D_nb
-		self.D_Pb = D_Pb
-		self.D_nc = D_nc
-		self.D_Pc = D_Pc
-		
-		if self.tau_a == 0:
-			print("please don't set relaxation times to 0, if you want instantaneous processes set tau = dt - setting tau_a = 1")
-			self.tau_a = 1
-		if self.tau_b == 0:
-			print("please don't set relaxation times to 0, if you want instantaneous processes set tau = dt - setting tau_b = 1")
-			self.tau_b = 1
-		if self.tau_c == 0:
-			print("please don't set relaxation times to 0, if you want instantaneous processes set tau = dt - setting tau_c = 1")
-			self.tau_c = 1
-		
-
-class simulation_parameters:
-	def __init__(self, epsilon_0, c, dx, dt):
-		#self.C2 = (c * dt / dx)**2 # courant number
-		#print('Courant number for this run is: ', self.C2)
-		#if self.C2 > 1:	print("Courant number is greater than 1, numerical shittyness unpreventable!")
-
-		#self.wave_length = wave_length
-		self.epsilon_0 = epsilon_0
-		self.dt = dt
-		self.dx = dx
-		self.c = c
-
 
 class cell (object):
 	def __init__(self, constants, parameter, initial_condition):
