@@ -1,9 +1,9 @@
-f(x) = 0.0007*exp(-x/11)
+f(x) = 0.007*exp(-x/11)
 
 
-set logscale y
+#set logscale y
 
 plot filename, \
-f(x) with lines linestyle 1
+#f(x) with lines linestyle 1
 
 pause -1

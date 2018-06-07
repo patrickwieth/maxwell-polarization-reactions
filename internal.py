@@ -90,7 +90,14 @@ class cell (object):
 		if k_cab < 0:
 			k_cab = 0
 			print("k_cab < 0")
+		if k_caaa < 0:
+			k_caaa = 0
+			print("k_caaa < 0")
+		if k_aaac < 0:
+			k_aaac = 0
+			print("k_aaac < 0")
 		
+
 		r_1 = k_aab * self.n_a**2 - k_baa * self.n_b
 		r_2 = k_abc * self.n_a * self.n_b - k_cab * self.n_c
 		r_3 = k_aaac * self.n_a**3 - k_caaa * self.n_c
