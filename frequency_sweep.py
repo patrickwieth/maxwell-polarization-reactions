@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
 import engine, environment
-import material2 as material
+import material1 as material
 
 import argparse
 
@@ -14,13 +14,10 @@ args = parser.parse_args()
 
 
 size = 1
+steps = int(200000)
+used_material = material.monoalcohol
 
-used_material = material.arbitrary
-
-simulation = engine.grid(used_material, environment.arbitrary, size)
-
-
-steps = int(10000)
+simulation = engine.grid(material, used_material, environment.arbitrary, size)
 
 
 # load start state or equilibrate at beginning
@@ -39,14 +36,14 @@ else:
 
 for n in range(150):
 
-	freq = 0.0000001 * 1.1**n
+	freq = 0.0000002 * 1.1**n
 	period_t = 2 * 3.1415 / freq
-	
-	E_field = environment.external_field(strength=1, frequency=freq, wave_length=50)
-	sweep_environment = environment.simulation_parameters(epsilon_0 = 1, c = 1.0, dx = 0.1, dt = period_t/100000000, external_fields = [E_field])
-	
 
-	simulation = engine.grid(used_material, sweep_environment, size)
+	E_field = environment.external_field(strength=1, frequency=freq, wave_length=50)
+	sweep_environment = environment.simulation_parameters(epsilon_0 = 1, dx = 0.1, dt = period_t/100000000, external_fields = [E_field])
+
+
+	simulation = engine.grid(material, used_material, sweep_environment, size)
 	simulation.load("equilibrium", False)
 
 	observe = engine.analyze(simulation)
@@ -55,4 +52,4 @@ for n in range(150):
 		simulation.evolve()
 		observe.calculate_dielectric_response()
 
-	print(observe.chi_accumulated/steps)
+	print(freq, observe.chi_accumulated/steps)

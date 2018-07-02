@@ -2,16 +2,14 @@ import numpy as np
 import math, random
 import pickle
 
-import material2D as material
-
-# TODO: relax Diffusion, cooperate Polarization
 
 class grid2D:
-	def __init__(self, materialc, environment, size):
+	def __init__(self, material, materialc, environment, size):
 		self.size = size
 		self.parameters = environment
+		self.material = material
 		self.constants = materialc
-		
+
 		self.current_step = 0
 
 		self.f = np.array([0.0, 0.0])
@@ -19,7 +17,7 @@ class grid2D:
 		self.spawn_grid()
 
 
-	def iterate(self, fn):	
+	def iterate(self, fn):
 		# 2D version
 		for idx, line in enumerate(self.cells):
 			for idy, cell in enumerate(line):
@@ -33,50 +31,57 @@ class grid2D:
 			self.P_a = np.array([length*math.cos(angle), length*math.sin(angle)])
 			self.P_b = np.array([length*math.cos(angle), length*math.sin(angle)])
 			self.P_c = np.array([length*math.cos(angle), length*math.sin(angle)])
-			self.n_a = 0.3 #+ random.uniform(-rnd, rnd)
-			self.n_b = 0.2 #+ random.uniform(-rnd, rnd)
-			self.n_c = 0.1 #+ random.uniform(-rnd, rnd)
+			self.n_a = 0.30 #+ random.uniform(-rnd, rnd)
+			self.n_b = 0.19 #+ random.uniform(-rnd, rnd)
+			self.n_c = 0.10 #+ random.uniform(-rnd, rnd)
 			self.rot_a = 0
 			self.rot_b = 0
 			self.rot_c = 0
 			return self
 
-		#2D 
+		#2D
 		self.cells = np.array([
-			[material.cell(self.constants, self.parameters, init_function(x,y) ) for x in range(self.size)] 
+			[self.material.cell(self.constants, self.parameters, init_function(x,y) ) for x in range(self.size)]
 			for y in range(self.size)])
 
-		''' 
+		'''
 		# neighbors are needed for diffusion
 		def attach_neighbor(cell, idx, idy):
-			if(idx > 0): 
+			if(idx > 0):
 				cell.neighbors.append(self.cells[idx-1, idy])
 			if(idy > 0):
 				cell.neighbors.append(self.cells[idx, idy-1])
-						
-			if(idx < self.size-1): 
+
+			if(idx < self.size-1):
 				cell.neighbors.append(self.cells[idx+1, idy])
-			if(idy < self.size-1): 
+			if(idy < self.size-1):
 				cell.neighbors.append(self.cells[idx, idy+1])
 
-		self.iterate(attach_neighbor) 
+		self.iterate(attach_neighbor)
 		'''
 		self.future_cells = np.copy(self.cells)
 
 	def apply_dipole_field(self):
 
+		fieldrange = 3
+		if 2*fieldrange > self.size:
+			fieldrange = int(math.floor(self.size/2))
+
 		def vector_field(p, r):
 			r_abs = np.linalg.norm(r)
-			E_r = 1/self.parameters.epsilon_0 * (3*np.dot(p, r)*r/r_abs**5 - p/r_abs**3)
+			E_r = 1/(4*math.pi*self.parameters.epsilon_0) * (3*np.dot(p, r)*r/r_abs**5 - p/r_abs**3)
 			return E_r
 
 		def get_field(cell, idx, idy):
 			field = np.zeros(2)
 
-			for y in range(self.size):
-				for x in range(self.size):
-					field += vector_field(self.cells[x, y].P, math.sqrt(x**2 + y**2))  if x != 0 or y != 0 else 0
-				
+			for dx in range(-fieldrange, fieldrange+1):
+				for dy in range(-fieldrange, fieldrange+1):
+
+					dist = math.sqrt(dx**2 + dy**2)
+					if dist > 0 and dist <= fieldrange:
+						field += vector_field(self.cells[(idx+dx)%self.size, (idy+dy)%self.size].P, np.array([dx, dy]))
+
 			cell.dipolar_field = field
 
 		self.iterate(get_field)
@@ -91,7 +96,7 @@ class grid2D:
 		self.iterate(lambda cell, idx, idy: cell.internal_update(self.f) ) 	#2D
 
 		#def set_future(cell, idx, idy):		#2D
-		#	self.future_cells[idx, idy] = cell 	
+		#	self.future_cells[idx, idy] = cell
 
 		#self.iterate(set_future)
 
@@ -104,9 +109,9 @@ class grid2D:
 		self.apply_external_fields()
 		self.apply_dipole_field()
 		self.make_future_happen()
-			
+
 	def save(self, filename, verbose):
-		save_cells = material.get_data(self)
+		save_cells = self.material.get_data(self)
 
 		with open(r""+filename, "wb") as output_file:
 			pickle.dump(save_cells, output_file)
@@ -117,32 +122,29 @@ class grid2D:
 		with open(r""+filename, "rb") as input_file:
 			loaded = pickle.load(input_file)
 
-		insert_loaded = material.load_function(loaded)
+		insert_loaded = self.material.load_function(loaded)
 
 		self.iterate(insert_loaded)
 		if verbose : print("loaded file", filename)
 
 
-
 class analyze:
 	def __init__(self, grid):
 		self.chi = 0
-
 		self.chi_accumulated = 0
-		
 		self.grid = grid
-
 		self.counter = 0
 
+	# assuming the electrical field is in x-direction
 	def calculate_dielectric_response(self):
 		self.chi = 0
 		self.counter = 0
 
 		def collect_chi(cell, idx):
-			self.chi += abs(cell.P)
+			self.chi += abs(cell.P[0])
 
 		self.grid.iterate(collect_chi)
-		self.chi = self.chi / self.grid.size
+		self.chi = self.chi / self.grid.size**2
 
 		self.chi_accumulated += self.chi
 
@@ -151,9 +153,7 @@ class analyze:
 		self.P_t = 0.0
 
 		def collect_P(cell, idx):
-			if cell.E != 0:
-				self.P_t += cell.P
-
+			self.P_t += cell.P
 
 		self.grid.iterate(collect_P)
 
@@ -179,4 +179,3 @@ class analyze:
 			obs[4, idx, idy] = cell.P[1]
 		self.grid.iterate(extract_obs)
 		return obs
-	

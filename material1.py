@@ -2,7 +2,7 @@ import numpy as np
 from functools import partial
 
 class constants:
-	def __init__(self, k_aab0, k_baa0, k_abc0, k_cab0, k_caaa0, k_aaac0, alpha_aab, alpha_baa, alpha_abc, alpha_cab, alpha_aaac, alpha_caaa, dP, epsilon_ra, epsilon_rb, epsilon_rc, tau_a, tau_b, tau_c, D_na, D_nb, D_nc, D_Pa, D_Pb, D_Pc):
+	def __init__(self, k_aab0, k_baa0, k_abc0, k_cab0, k_caaa0, k_aaac0, alpha_aab, alpha_baa, alpha_abc, alpha_cab, alpha_aaac, alpha_caaa, epsilon_ra, epsilon_rb, epsilon_rc, tau_a, tau_b, tau_c, D_na, D_nb, D_nc, D_Pa, D_Pb, D_Pc):
 		self.k_aab0 =  k_aab0
 		self.k_baa0 = k_baa0
 		self.k_abc0 = k_abc0
@@ -15,7 +15,6 @@ class constants:
 		self.alpha_cab = alpha_cab
 		self.alpha_aaac = alpha_aaac
 		self.alpha_caaa = alpha_caaa
-		self.dP = dP
 		self.epsilon_ra = epsilon_ra
 		self.epsilon_rb = epsilon_rb
 		self.epsilon_rc = epsilon_rc
@@ -28,7 +27,7 @@ class constants:
 		self.D_Pb = D_Pb
 		self.D_nc = D_nc
 		self.D_Pc = D_Pc
-		
+
 		if self.tau_a == 0:
 			print("please don't set relaxation times to 0, if you want instantaneous processes set tau = dt - setting tau_a = 1")
 			self.tau_a = 1
@@ -42,25 +41,30 @@ class constants:
 
 simple = constants(
 					k_aab0 = 0, k_baa0 = 0, k_abc0 = 0, k_cab0 = 0, k_caaa0 = 0, k_aaac0 = 0,
-					alpha_aab = 0.0, alpha_baa = 0.0, alpha_abc = 0.0, alpha_cab = -0.0, alpha_aaac = 0, alpha_caaa = 0, 
-					epsilon_ra = 1.0, epsilon_rb = 2.0, epsilon_rc = 3.0, dP = 0.0,
+					alpha_aab = 0.0, alpha_baa = 0.0, alpha_abc = 0.0, alpha_cab = -0.0, alpha_aaac = 0, alpha_caaa = 0,
+					epsilon_ra = 1.0, epsilon_rb = 2.0, epsilon_rc = 3.0,
 					tau_a = 1.0, tau_b = 1.0, tau_c = 1.0,
 					D_na = 0.1, D_nb = 0.1, D_nc = 0.1, D_Pa = 0.1, D_Pb = 0.1, D_Pc = 0.1)
 
+twopeaks = constants(
+					k_aab0 = 0, k_baa0 = 0, k_abc0 = 0, k_cab0 = 0, k_caaa0 = 0, k_aaac0 = 0,
+					alpha_aab = 0.0, alpha_baa = 0.0, alpha_abc = 0.0, alpha_cab = -0.0, alpha_aaac = 0, alpha_caaa = 0,
+					epsilon_ra = 1.0, epsilon_rb = 30.0, epsilon_rc = 0.0,
+					tau_a = 1.0, tau_b = 100.0, tau_c = 1.0,
+					D_na = 0.1, D_nb = 0.1, D_nc = 0.1, D_Pa = 0.1, D_Pb = 0.1, D_Pc = 0.1)
+
 monoalcohol = constants(
-					k_aab0 = 0.001, k_baa0 = 0.002, k_abc0 = 0.005, k_cab0 = 0.005, k_caaa0 = 0.004, k_aaac0 = 0.0001,
-					alpha_aab = 0.01, alpha_baa = -0.01, alpha_abc = 0.01, alpha_cab = -0.01, alpha_aaac = 0.1, alpha_caaa = -0.01, 
-					epsilon_ra = 1.0, epsilon_rb = 3, epsilon_rc = 5, dP = 0.0,
-					tau_a = 1.0, tau_b = 2.0, tau_c = 3.0,
+					k_aab0 = 0.004, k_baa0 = 0.5, k_abc0 = 0.005, k_cab0 = 0.005, k_caaa0 = 0.004, k_aaac0 = 0.0001,
+					alpha_aab = 0.3, alpha_baa = -0.3, alpha_abc = 0.3, alpha_cab = -0.3, alpha_aaac = 0.3, alpha_caaa = -0.3,
+					epsilon_ra = 1.0, epsilon_rb = 3.0, epsilon_rc = 9.0,
+					tau_a = 1, tau_b = 3.0, tau_c = 5.0,
 					D_na = 0.00028, D_nb = 0.05, D_nc = 0.05, D_Pa = 0.00028, D_Pb = 0.05, D_Pc = 0.05)
 
-factor = 10000
-
 arbitrary = constants(
-					k_aab0 = 0.001, k_baa0 = 0.09, k_abc0 = 0.001, k_cab0 = 0.09, k_aaac0 = 0.001, k_caaa0 = 0.09,
-					alpha_aab = factor, alpha_baa = -1*factor, alpha_abc = factor, alpha_cab = -1*factor, alpha_aaac = factor, alpha_caaa = -1*factor, 
-					epsilon_ra = 1.0, epsilon_rb = 10.0, epsilon_rc = 100.0, dP = 0.0,
-					tau_a = 25.0, tau_b = 5.0, tau_c = 1.0,
+					k_aab0 = 0.004, k_baa0 = 0.5, k_abc0 = 0.005, k_cab0 = 0.005, k_caaa0 = 0.004, k_aaac0 = 0.0001,
+					alpha_aab = 0.3, alpha_baa = -0.3, alpha_abc = 0.3, alpha_cab = -0.3, alpha_aaac = 0.3, alpha_caaa = -0.3,
+					epsilon_ra = 1.0, epsilon_rb = 10.0, epsilon_rc = 100.0,
+					tau_a = 0.5, tau_b = 2.0, tau_c = 6.0,
 					D_na = 0.00028, D_nb = 0.05, D_nc = 0.05, D_Pa = 0.00028, D_Pb = 0.05, D_Pc = 0.05)
 
 
@@ -80,24 +84,24 @@ class cell (object):
 		self.constants = constants
 		self.parameter = parameter
 
-		self.internal_update = partial(self.internal_update_in_general, 
-			parameter.epsilon_0, 
+		self.internal_update = partial(self.internal_update_in_general,
+			parameter.epsilon_0,
 			constants.k_aab0, constants.k_baa0, constants.k_abc0, constants.k_cab0, constants.k_caaa0, constants.k_aaac0,
-			constants.alpha_aab, constants.alpha_baa, constants.alpha_abc, constants.alpha_cab, constants.alpha_aaac, constants.alpha_caaa, constants.dP,
-			constants.epsilon_ra, constants.epsilon_rb, constants.epsilon_rc, 
-			constants.tau_a, constants.tau_b, constants.tau_c, 
+			constants.alpha_aab, constants.alpha_baa, constants.alpha_abc, constants.alpha_cab, constants.alpha_aaac, constants.alpha_caaa,
+			constants.epsilon_ra, constants.epsilon_rb, constants.epsilon_rc,
+			constants.tau_a, constants.tau_b, constants.tau_c,
 			parameter.dt)
 
 		self.neighbors = []
 
 
-	def internal_update_in_general(self, epsilon_0, k_aab0, k_baa0, k_abc0, k_cab0, k_caaa0, k_aaac0, alpha_aab, alpha_baa, alpha_abc, alpha_cab, alpha_aaac, alpha_caaa, dP, epsilon_ra, epsilon_rb, epsilon_rc, tau_a, tau_b, tau_c, dt, q):
-		
+	def internal_update_in_general(self, epsilon_0, k_aab0, k_baa0, k_abc0, k_cab0, k_caaa0, k_aaac0, alpha_aab, alpha_baa, alpha_abc, alpha_cab, alpha_aaac, alpha_caaa, epsilon_ra, epsilon_rb, epsilon_rc, tau_a, tau_b, tau_c, dt, q):
+
 		epsilon_rges = self.n_a * epsilon_ra + self.n_b * epsilon_rb + self.n_c * epsilon_rc
 		self.E = (q - self.P * epsilon_rges)/ epsilon_0
 
 		# calculate updates
-		
+
 		P_squared = np.dot(self.P, self.P)
 
 		k_aab = k_aab0 + alpha_aab * P_squared
@@ -125,7 +129,7 @@ class cell (object):
 		if k_aaac < 0:
 			k_aaac = 0
 			print("k_aaac < 0")
-		
+
 
 		r_1 = k_aab * self.n_a**2 - k_baa * self.n_b
 		r_2 = k_abc * self.n_a * self.n_b - k_cab * self.n_c
@@ -148,10 +152,10 @@ class cell (object):
 		dn_b = - r_1 - r_2
 		dn_c = r_2
 		'''
-		
-		dP_a = (self.n_a*epsilon_ra/epsilon_rges * epsilon_0 * self.E - self.P_a)/tau_a + dP * (2*r_1 - r_1 - 0.5 * r_2)
-		dP_b = (self.n_b*epsilon_rb/epsilon_rges * epsilon_0 * self.E - self.P_b)/tau_b + dP * (r_1 - 0.5 * r_2)
-		dP_c = (self.n_c*epsilon_rc/epsilon_rges * epsilon_0 * self.E - self.P_c)/tau_c + dP * (r_2 - 2 * r_3)
+
+		dP_a = (self.n_a*epsilon_ra/epsilon_rges * epsilon_0 * self.E - self.P_a)/tau_a
+		dP_b = (self.n_b*epsilon_rb/epsilon_rges * epsilon_0 * self.E - self.P_b)/tau_b
+		dP_c = (self.n_c*epsilon_rc/epsilon_rges * epsilon_0 * self.E - self.P_c)/tau_c
 
 
 		# apply updates
@@ -185,6 +189,5 @@ def get_data(grid):
 			grid.cells[x].P_c,
 			grid.cells[x].n_a,
 			grid.cells[x].n_b,
-			grid.cells[x].n_c] 
-			for x in range(grid.size)]) 
-
+			grid.cells[x].n_c]
+			for x in range(grid.size)])

@@ -2,26 +2,24 @@ import numpy as np
 import math, random
 import pickle
 
-import material2 as material
 
-
-# TODO: relax Diffusion, cooperate Polarization
 
 class grid:
-	def __init__(self, materialc, environment, size):
+	def __init__(self, material, materialc, environment, size):
 		self.size = size
 		self.parameters = environment
+		self.material = material
 		self.constants = materialc
-		
+
 		self.current_step = 0
-		#self.cells = np.empty([size, size])
+
 		self.dq = 1
 		self.f = 0
 
 		self.spawn_grid()
 
 
-	def iterate(self, fn):	
+	def iterate(self, fn):
 		# 1D version
 		for idx, cell in enumerate(self.cells):
 			fn(cell, idx)
@@ -38,16 +36,16 @@ class grid:
 			return self
 
 		# 1D version:
-		self.cells = np.array([material.cell(self.constants, self.parameters, init_function(x) ) for x in range(self.size)])
+		self.cells = np.array([self.material.cell(self.constants, self.parameters, init_function(x) ) for x in range(self.size)])
 
 		# neighbors are defined here, this determines topology
 		def attach_neighbor(cell, idx):
-			if(idx > 0): 
+			if(idx > 0):
 				cell.neighbors.append(self.cells[idx-1])
-			if(idx < self.size-1): 
+			if(idx < self.size-1):
 				cell.neighbors.append(self.cells[idx+1])
 
-		self.iterate(attach_neighbor) 
+		self.iterate(attach_neighbor)
 
 		self.future_cells = np.copy(self.cells)
 
@@ -73,7 +71,7 @@ class grid:
 			n_deltas = n_laplaces * diffusion_coefficients * self.parameters.dt
 			p_laplaces = np.array([laplace(cell, observable) for observable in polarizations])
 			p_deltas = p_laplaces * polarization_diffusion_coefficients * self.parameters.dt
-			
+
 			for obs, delta in zip(concentrations, n_deltas):
 				setattr(self.future_cells[idx], obs, getattr(cell, obs) + delta)
 
@@ -83,10 +81,9 @@ class grid:
 		self.iterate(diffuse)
 
 	def internal_update(self):
-		
+
 		self.iterate(lambda cell, idx: cell.internal_update(self.f) )
 
-		#def set_future(cell, idx, idy):
 		def set_future(cell, idx):
 			self.future_cells[idx] = cell
 
@@ -99,11 +96,11 @@ class grid:
 	def evolve(self):
 		self.internal_update()
 		self.apply_external_fields()
-		#self.apply_diffusion()
+		#self.apply_diffusion()						# take care, diffusion disabled here
 		self.make_future_happen()
-			
+
 	def save(self, filename, verbose):
-		save_cells = material.get_data(self)
+		save_cells = self.material.get_data(self)
 
 		with open(r""+filename, "wb") as output_file:
 			pickle.dump(save_cells, output_file)
@@ -114,7 +111,7 @@ class grid:
 		with open(r""+filename, "rb") as input_file:
 			loaded = pickle.load(input_file)
 
-		insert_loaded = material.load_function(loaded)
+		insert_loaded = self.material.load_function(loaded)
 
 		self.iterate(insert_loaded)
 		if verbose : print("loaded file", filename)
@@ -126,7 +123,7 @@ class analyze:
 		self.chi = 0
 
 		self.chi_accumulated = 0
-		
+
 		self.grid = grid
 
 		self.counter = 0

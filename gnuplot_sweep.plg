@@ -1,7 +1,12 @@
 f(x) = 0.007*exp(-x/11)
 
 
-#set logscale y
+set logscale x
+set logscale y
+
+#set format y "%.2t*10^%+03T";
+set format x "10^{%+02T}"
+set format y "10^{%+02T}";
 
 plot filename, \
 #f(x) with lines linestyle 1

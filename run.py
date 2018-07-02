@@ -2,7 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
-import engine, internal, material, environment
+import engine, environment
+import material2 as material
 
 import argparse
 
@@ -17,8 +18,7 @@ size = 1
 used_material = material.monoalcohol
 E_field = environment.external_field(strength=0.0, frequency=0.0, wave_length=50)
 
-simulation = engine.grid(used_material, environment.arbitrary, size, [E_field])
-
+simulation = engine.grid(used_material, environment.arbitrary, size)
 
 
 
@@ -106,7 +106,7 @@ def updatefig(*args):
 
 	#observe.calculate_dielectric_response(simulation.current_step)
 	#observe.calculate_total_polarisation()
-	
+
 	#print(simulation.current_step)
 	#observe.print_mass()
 

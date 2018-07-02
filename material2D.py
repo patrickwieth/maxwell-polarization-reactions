@@ -2,7 +2,7 @@ import numpy as np
 from functools import partial
 
 class constants:
-	def __init__(self, k_aab0, k_baa0, k_abc0, k_cab0, k_caaa0, k_aaac0, alpha_aab, alpha_baa, alpha_abc, alpha_cab, alpha_aaac, alpha_caaa, dP, epsilon_ra, epsilon_rb, epsilon_rc, tau_a, tau_b, tau_c, I_a, I_b, I_c):
+	def __init__(self, k_aab0, k_baa0, k_abc0, k_cab0, k_caaa0, k_aaac0, alpha_aab, alpha_baa, alpha_abc, alpha_cab, alpha_aaac, alpha_caaa, epsilon_ra, epsilon_rb, epsilon_rc, tau_a, tau_b, tau_c, I_a, I_b, I_c, P_eq):
 		self.k_aab0 = k_aab0
 		self.k_baa0 = k_baa0
 		self.k_abc0 = k_abc0
@@ -15,7 +15,7 @@ class constants:
 		self.alpha_cab = alpha_cab
 		self.alpha_aaac = alpha_aaac
 		self.alpha_caaa = alpha_caaa
-		self.dP = dP
+		self.P_eq = P_eq
 		self.epsilon_ra = epsilon_ra
 		self.epsilon_rb = epsilon_rb
 		self.epsilon_rc = epsilon_rc
@@ -25,7 +25,7 @@ class constants:
 		self.I_a = I_a
 		self.I_b = I_b
 		self.I_c = I_c
-		
+
 		if self.tau_a == 0:
 			print("please don't set relaxation times to 0, if you want instantaneous processes set tau = dt - setting tau_a = 1")
 			self.tau_a = 1
@@ -36,33 +36,54 @@ class constants:
 			print("please don't set relaxation times to 0, if you want instantaneous processes set tau = dt - setting tau_c = 1")
 			self.tau_c = 1
 
+############ Simple Materials Section ############
+
+# these materials are for testing, by choosing specific parameters, they disable certain parts of the simulation
 
 simple = constants(
-					k_aab0 = 0, k_baa0 = 0, k_abc0 = 0, k_cab0 = 0, k_caaa0 = 0, k_aaac0 = 0,
-					alpha_aab = 0.0, alpha_baa = 0.0, alpha_abc = 0.0, alpha_cab = -0.0, alpha_aaac = 0, alpha_caaa = 0, 
-					epsilon_ra = 1.0, epsilon_rb = 2.0, epsilon_rc = 3.0, dP = 0.0,
+					k_aab0 = 0, k_baa0 = 0, k_abc0 = 0, k_cab0 = 0, k_aaac0 = 0, k_caaa0 = 0,
+					alpha_aab = 0, alpha_baa = 0, alpha_abc = 0, alpha_cab = 0, alpha_aaac = 0, alpha_caaa = 0,
+					epsilon_ra = 1.0, epsilon_rb = 2.0, epsilon_rc = 3.0, P_eq = 0.0,
 					tau_a = 1.0, tau_b = 1.0, tau_c = 1.0,
 					I_a = 10, I_b = 10, I_c = 10)
 
+
+############ Mono-Alcohol Section ############
+
+fieldfactor = 0.3
+join_reaction = 0.004
+disc_reaction = 0.50
+
+ff = fieldfactor
+jr = join_reaction
+dr = disc_reaction
+
 monoalcohol = constants(
-					k_aab0 = 0.001, k_baa0 = 0.002, k_abc0 = 0.005, k_cab0 = 0.005, k_caaa0 = 0.004, k_aaac0 = 0.0001,
-					alpha_aab = 0.0, alpha_baa = -0.0, alpha_abc = 0.0, alpha_cab = 0.0, alpha_aaac = 0.0, alpha_caaa = 0.0, 
-					epsilon_ra = 1.0, epsilon_rb = 3, epsilon_rc = 5, dP = 0.0,
-					tau_a = 1.0, tau_b = 3.0, tau_c = 5.0,
-					I_a = 1.1, I_b = 1.2, I_c = 1.3)
+					k_aab0 = jr, k_baa0 = dr, k_abc0 = jr, k_cab0 = dr, k_aaac0 = jr, k_caaa0 = dr,
+					alpha_aab = ff, alpha_baa = -ff, alpha_abc = ff, alpha_cab = -ff, alpha_aaac = ff, alpha_caaa = -ff,
+					epsilon_ra = 1.0, epsilon_rb = 3, epsilon_rc = 5, P_eq = 1.0,
+					tau_a = 1.0, tau_b = 4.0, tau_c = 16.0,
+					I_a = 1.0, I_b = 2.0, I_c = 3.0)
+
+
+############ Experimental Materials Section ############
+
+ff = 0.0
+dr = 0.5
 
 arbitrary = constants(
-					k_aab0 = 0.001, k_baa0 = 0.09, k_abc0 = 0.001, k_cab0 = 0.09, k_aaac0 = 0.001, k_caaa0 = 0.09,
-					alpha_aab = 1, alpha_baa = -1, alpha_abc = 1, alpha_cab = -1, alpha_aaac = 1, alpha_caaa = -1, 
-					epsilon_ra = 1.0, epsilon_rb = 10.0, epsilon_rc = 100.0, dP = 0.0,
-					tau_a = 25.0, tau_b = 5.0, tau_c = 1.0,
-					I_a = 1, I_b = 1, I_c = 1)
+					k_aab0 = jr, k_baa0 = dr, k_abc0 = jr, k_cab0 = dr, k_aaac0 = jr, k_caaa0 = dr,
+					alpha_aab = ff, alpha_baa = -ff, alpha_abc = ff, alpha_cab = -ff, alpha_aaac = ff, alpha_caaa = -ff,
+					epsilon_ra = 1.0, epsilon_rb = 3, epsilon_rc = 5, P_eq = 1.0,
+					tau_a = 4.0, tau_b = 8.0, tau_c = 16.0,
+					I_a = 1.0, I_b = 2.0, I_c = 3.0)
 
 
 class cell (object):
 	def __init__(self, constants, parameter, initial_condition):
-		self.E = 0.0
-		self.P = 0.0
+		self.E = np.zeros(2)
+		self.P = np.zeros(2)
+		self.dipolar_field = np.zeros(2)
 
 		self.P_a = initial_condition.P_a
 		self.P_b = initial_condition.P_b
@@ -74,42 +95,38 @@ class cell (object):
 		self.rot_b = initial_condition.rot_b
 		self.rot_c = initial_condition.rot_c
 
-		self.dipolar_field = np.zeros(2)
-
 		self.constants = constants
 		self.parameter = parameter
 
-		self.internal_update = partial(self.internal_update_in_general, 
-			parameter.epsilon_0, 
+		self.internal_update = partial(self.internal_update_in_general,
+			parameter.epsilon_0,
 			constants.k_aab0, constants.k_baa0, constants.k_abc0, constants.k_cab0, constants.k_caaa0, constants.k_aaac0,
-			constants.alpha_aab, constants.alpha_baa, constants.alpha_abc, constants.alpha_cab, constants.alpha_aaac, constants.alpha_caaa, constants.dP,
-			constants.epsilon_ra, constants.epsilon_rb, constants.epsilon_rc, 
-			constants.tau_a, constants.tau_b, constants.tau_c, 
-			constants.I_a, constants.I_b, constants.I_c,
+			constants.alpha_aab, constants.alpha_baa, constants.alpha_abc, constants.alpha_cab, constants.alpha_aaac, constants.alpha_caaa,
+			constants.epsilon_ra, constants.epsilon_rb, constants.epsilon_rc,
+			constants.tau_a, constants.tau_b, constants.tau_c,
+			constants.I_a, constants.I_b, constants.I_c, constants.P_eq,
 			parameter.dt)
 
 		self.neighbors = []
 
 
-	def internal_update_in_general(self, epsilon_0, k_aab0, k_baa0, k_abc0, k_cab0, k_caaa0, k_aaac0, alpha_aab, alpha_baa, alpha_abc, alpha_cab, alpha_aaac, alpha_caaa, dP, epsilon_ra, epsilon_rb, epsilon_rc, tau_a, tau_b, tau_c, I_a, I_b, I_c, dt, q):
+	def internal_update_in_general(self, epsilon_0, k_aab0, k_baa0, k_abc0, k_cab0, k_caaa0, k_aaac0, alpha_aab, alpha_baa, alpha_abc, alpha_cab, alpha_aaac, alpha_caaa, epsilon_ra, epsilon_rb, epsilon_rc, tau_a, tau_b, tau_c, I_a, I_b, I_c, P_eq, dt, Efield):
 		# permittivity of whole cell
 		epsilon_rges = self.n_a * epsilon_ra + self.n_b * epsilon_rb + self.n_c * epsilon_rc
 
 		# electrical field at cell
-		self.E = q #(q - self.P * epsilon_rges)/ epsilon_0
+		self.E = Efield
 
-		#print(q)
-
-		# squared polarization
-		P_squared = np.dot(self.P, self.P)
+		# PE alignment
+		PE_align = np.dot(self.P, self.E + self.dipolar_field)
 
 		# reaction coefficients
-		k_aab = k_aab0 + alpha_aab * P_squared
-		k_baa = k_baa0 + alpha_baa * P_squared
-		k_abc = k_abc0 + alpha_abc * P_squared
-		k_cab = k_cab0 + alpha_cab * P_squared
-		k_caaa = k_caaa0 + alpha_caaa * P_squared
-		k_aaac = k_aaac0 + alpha_aaac * P_squared
+		k_aab = k_aab0 + alpha_aab * PE_align
+		k_baa = k_baa0 + alpha_baa * PE_align
+		k_abc = k_abc0 + alpha_abc * PE_align
+		k_cab = k_cab0 + alpha_cab * PE_align
+		k_caaa = k_caaa0 + alpha_caaa * PE_align
+		k_aaac = k_aaac0 + alpha_aaac * PE_align
 
 		if k_aab < 0:
 			k_aab = 0
@@ -129,18 +146,18 @@ class cell (object):
 		if k_aaac < 0:
 			k_aaac = 0
 			print("k_aaac < 0")
-		
+
 		# reaction rates
 		r_1 = k_aab * self.n_a**2 - k_baa * self.n_b
 		r_2 = k_abc * self.n_a * self.n_b - k_cab * self.n_c
 		r_3 = k_aaac * self.n_a**3 - k_caaa * self.n_c
 
+		#print("n_a:", self.n_a, "n_b:", self.n_b, "n_c:", self.n_c, "r1:",r_1,"r2:",r_2,"r3:",r_3)
+
 		# delta concentrations from reactions
 		dn_a = -2*r_1 - r_2 - 3*r_3
 		dn_b = r_1 - r_2
 		dn_c = r_2 + r_3
-		
-		P_eq = 2.5
 
 		# delta polarization (relaxtion of P to E and polarization from reactions?)
 		dP_a = (self.n_a*epsilon_ra/epsilon_rges * epsilon_0 * self.E - self.P_a + self.n_a*epsilon_ra/epsilon_rges * P_eq * self.P_a / np.linalg.norm(self.P_a) )/tau_a
@@ -148,9 +165,9 @@ class cell (object):
 		dP_c = (self.n_c*epsilon_rc/epsilon_rges * epsilon_0 * self.E - self.P_c + self.n_c*epsilon_ra/epsilon_rges * P_eq * self.P_c / np.linalg.norm(self.P_c) )/tau_c
 
 		# delta rotation (relaxation to 0 and torque)
-		dRot_a = -self.rot_a / 100*tau_a + np.cross(self.P_a, self.dipolar_field + self.E)
-		dRot_b = -self.rot_b / 100*tau_b + np.cross(self.P_b, self.dipolar_field + self.E)
-		dRot_c = -self.rot_c / 100*tau_c + np.cross(self.P_c, self.dipolar_field + self.E)
+		dRot_a = -self.rot_a / tau_a + np.cross(self.P_a, self.dipolar_field + self.E)
+		dRot_b = -self.rot_b / tau_b + np.cross(self.P_b, self.dipolar_field + self.E)
+		dRot_c = -self.rot_c / tau_c + np.cross(self.P_c, self.dipolar_field + self.E)
 
 		# apply updates
 		self.n_a += dn_a * dt
@@ -165,27 +182,26 @@ class cell (object):
 		self.rot_b += dRot_b * dt / I_b
 		self.rot_c += dRot_c * dt / I_c
 
-		print(self.rot_a)
-
+		# Check rotation, if it is too much, limit it
 		threshold = 1.00
 		if self.rot_a > threshold :
 			self.rot_a = threshold
-			print("rot_a > 90deg - set to 0")
+			print("rot_a > 90deg - set to", threshold)
 		if self.rot_b > threshold :
 			self.rot_b = threshold
-			print("rot_b > 90deg - set to 0")
+			print("rot_b > 90deg - set to", threshold)
 		if self.rot_c > threshold :
 			self.rot_c = threshold
-			print("rot_c > 90deg - set to 0")
+			print("rot_c > 90deg - set to", threshold)
 		if self.rot_a < -threshold :
 			self.rot_a = -threshold
-			print("rot_a > 90deg - set to 0")
+			print("rot_a > 90deg - set to", threshold)
 		if self.rot_b < -threshold :
 			self.rot_b = -threshold
-			print("rot_b > 90deg - set to 0")
+			print("rot_b > 90deg - set to", threshold)
 		if self.rot_c < -threshold :
 			self.rot_c = -threshold
-			print("rot_c > 90deg - set to 0")
+			print("rot_c > 90deg - set to", threshold)
 
 		def rotmatrix(rotspeed):
 			return np.array([[np.cos(rotspeed), -np.sin(rotspeed)], [np.sin(rotspeed), np.cos(rotspeed)]])
@@ -196,7 +212,7 @@ class cell (object):
 
 		self.P = self.P_a + self.P_b + self.P_c
 
-		
+
 
 def load_function(loaded):
 	def insert_loaded(cell, idx):
@@ -216,6 +232,5 @@ def get_data(grid):
 			grid.cells[x].P_c,
 			grid.cells[x].n_a,
 			grid.cells[x].n_b,
-			grid.cells[x].n_c] 
-			for x in range(grid.size)]) 
-
+			grid.cells[x].n_c]
+			for x in range(grid.size)])
