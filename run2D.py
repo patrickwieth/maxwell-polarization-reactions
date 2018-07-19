@@ -13,10 +13,11 @@ parser.add_argument("--load", help="load a checkpoint")
 args = parser.parse_args()
 
 size = 15
+freq = 0.1
 
 used_material = material.monoalcohol
-E_field = environment.external_field(strength=0.5, frequency=0.1, wave_length=50)
-env = environment.simulation_parameters(epsilon_0 = 1, dx = 0.1, dt = 0.1, external_fields = [E_field])
+E_field = environment.external_field(strength=0.1, frequency=freq, wave_length=50)
+env = environment.simulation_parameters(epsilon_0 = 1, dx = 1.0, dt = 0.01/freq, external_fields = [E_field])
 
 simulation = engine2D.grid2D(material, used_material, env, size)
 
@@ -55,8 +56,6 @@ Q = ax.quiver(X, Y, U, V, units='width')
 #ax.set_xlim(-1, 3)
 #ax.set_ylim(-1, 3)
 
-
-
 def updatefig(num, Q, X, Y):
 	simulation.evolve()
 	#if simulation.current_step % 1000 == 0:
@@ -70,6 +69,7 @@ def updatefig(num, Q, X, Y):
 	Q.set_UVC(U,V)
 
 	#print(state)
+	print(simulation.current_step)
 
 	return Q,
 

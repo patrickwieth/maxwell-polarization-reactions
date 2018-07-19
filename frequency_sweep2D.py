@@ -12,8 +12,8 @@ parser.add_argument("--load", help="load a checkpoint")
 args = parser.parse_args()
 
 
-size = 10
-steps = int(1000)
+size = 15
+steps = int(10000)
 used_material = material.monoalcohol
 
 E_field = environment.external_field(strength=1, frequency=0, wave_length=50)
@@ -27,33 +27,25 @@ simulation = engine2D.grid2D(material, used_material, sweep_environment, size)
 for n in range(steps):
 	simulation.evolve()
 
-observe = engine.analyze(simulation)
+observe = engine2D.analyze(simulation)
 
 print("pre-equilibration done")
-print(observe.get_observables())
-
-	#print("n_a, n_b")
-	#print(simulation.cells[0].n_a, simulation.cells[0].n_b)
-	#print("yes")
+#print(observe.get_observables())
 
 
-for n in range(150):
+for n in range(10):
 
-	freq = 0.0000002 * 1.1**n
-	#period_t = 2 * 3.1415 / freq
+	#freq = 0.0002 * 1.5**n
+	freq = 0.000002 * 1.5**n
 
-	#E_field = environment.external_field(strength=1, frequency=freq, wave_length=50)
-	#sweep_environment = environment.simulation_parameters(epsilon_0 = 1, dx = 0.1, dt = period_t/100000000, external_fields = [E_field])
-
-
-	#simulation = engine2D.grid(material, used_material, sweep_environment, size)
-	#simulation.load("equilibrium", False)
-
+	simulation.parameters.dt = 0.001/freq
 	simulation.parameters.force_fields[0].frequency = freq
 
+	observe = engine2D.analyze(simulation)
 
-	for n in range(steps):
+	for i in range(steps):
 		simulation.evolve()
+		#print(i, simulation.cells[0,0].E[1], simulation.cells[0,0].n_a, simulation.cells[0,0].n_b, simulation.cells[0,0].n_c)
 		observe.calculate_dielectric_response()
 
 	print(freq, observe.chi_accumulated/steps)

@@ -31,9 +31,9 @@ class grid2D:
 			self.P_a = np.array([length*math.cos(angle), length*math.sin(angle)])
 			self.P_b = np.array([length*math.cos(angle), length*math.sin(angle)])
 			self.P_c = np.array([length*math.cos(angle), length*math.sin(angle)])
-			self.n_a = 0.30 #+ random.uniform(-rnd, rnd)
-			self.n_b = 0.19 #+ random.uniform(-rnd, rnd)
-			self.n_c = 0.10 #+ random.uniform(-rnd, rnd)
+			self.n_a = 0.66 #+ random.uniform(-rnd, rnd)
+			self.n_b = 0.10 #+ random.uniform(-rnd, rnd)
+			self.n_c = 0.04 #+ random.uniform(-rnd, rnd)
 			self.rot_a = 0
 			self.rot_b = 0
 			self.rot_c = 0
@@ -140,8 +140,8 @@ class analyze:
 		self.chi = 0
 		self.counter = 0
 
-		def collect_chi(cell, idx):
-			self.chi += abs(cell.P[0])
+		def collect_chi(cell, idx, idy):
+			self.chi += abs(cell.P[1])
 
 		self.grid.iterate(collect_chi)
 		self.chi = self.chi / self.grid.size**2

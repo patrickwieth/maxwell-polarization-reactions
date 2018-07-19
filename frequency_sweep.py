@@ -14,8 +14,8 @@ args = parser.parse_args()
 
 
 size = 1
-steps = int(200000)
-used_material = material.monoalcohol
+steps = int(10000)
+used_material = material.twopeaks
 
 simulation = engine.grid(material, used_material, environment.arbitrary, size)
 
