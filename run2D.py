@@ -15,7 +15,7 @@ args = parser.parse_args()
 size = 15
 freq = 0.1
 
-used_material = material.monoalcohol
+used_material = material.simple
 E_field = environment.external_field(strength=0.1, frequency=freq, wave_length=50)
 env = environment.simulation_parameters(epsilon_0 = 1, dx = 1.0, dt = 0.01/freq, external_fields = [E_field])
 
@@ -43,7 +43,7 @@ X, Y = np.meshgrid(np.arange(0, size, 1), np.arange(0, size, 1))
 U = state[3, X, Y]
 V = state[4, X, Y]
 
-fig, ax = plt.subplots(1,1)
+fig, ax = plt.subplots(1,1, figsize=(10, 10))
 
 ###############################################################################
 
@@ -57,9 +57,14 @@ Q = ax.quiver(X, Y, U, V, units='width')
 #ax.set_ylim(-1, 3)
 
 def updatefig(num, Q, X, Y):
+
+	#if simulation.current_step % 10 == 0:
+		# save image
+		#plt.savefig("dipoles/steps"+str(simulation.current_step), format="svg")
+		# save simulationa
+		#simulation.save("checkpoint-"+str(int(simulation.current_step/1000)))
+
 	simulation.evolve()
-	#if simulation.current_step % 1000 == 0:
-	#	simulation.save("checkpoint-"+str(int(simulation.current_step/1000)))
 
 	state = observe.get_observables()
 

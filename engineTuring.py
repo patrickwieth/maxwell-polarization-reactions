@@ -3,8 +3,7 @@ import math, random
 import pickle
 
 
-
-class grid:
+class grid2D:
 	def __init__(self, material, materialc, environment, size):
 		self.size = size
 		self.parameters = environment
@@ -13,47 +12,55 @@ class grid:
 
 		self.current_step = 0
 
-		self.dq = 1
 		self.f = 0
 
 		self.spawn_grid()
 
 
 	def iterate(self, fn):
-		# 1D version
-		for idx, cell in enumerate(self.cells):
-			fn(cell, idx)
-
+		# 2D version
+		for idx, line in enumerate(self.cells):
+			for idy, cell in enumerate(line):
+				fn(cell, idx, idy)
 
 	def spawn_grid(self):
-		def init_function(x):
-			self.P_a = 0
-			self.P_b = 0
-			self.P_c = 0
-			self.n_a = 0.6 #+ random.uniform(-0.1, 0.1)
-			self.n_b = 0.2 #+ random.uniform(-0.1, 0.1)
-			self.n_c = 0.1 #+ random.uniform(-0.1, 0.1)
+		def init_function(x,y):
+			rnd = 0.01
+			self.P_a = 0.1
+			self.P_b = 0.1
+			self.P_c = 0.1
+			self.n_a = 0.66 + random.uniform(-rnd, rnd)
+			self.n_b = 0.10 + random.uniform(-rnd, rnd)
+			self.n_c = 0.04 + random.uniform(-rnd, rnd)
 			return self
 
-		# 1D version:
-		self.cells = np.array([self.material.cell(self.constants, self.parameters, init_function(x) ) for x in range(self.size)])
+		#2D
+		self.cells = np.array([
+			[self.material.cell(self.constants, self.parameters, init_function(x,y) ) for x in range(self.size)]
+			for y in range(self.size)])
 
-		# neighbors are defined here, this determines topology
-		def attach_neighbor(cell, idx):
+
+		# neighbors are needed for diffusion
+		def attach_neighbor(cell, idx, idy):
 			if(idx > 0):
-				cell.neighbors.append(self.cells[idx-1])
+				cell.neighbors.append(self.cells[idx-1, idy])
+			if(idy > 0):
+				cell.neighbors.append(self.cells[idx, idy-1])
+
 			if(idx < self.size-1):
-				cell.neighbors.append(self.cells[idx+1])
+				cell.neighbors.append(self.cells[idx+1, idy])
+			if(idy < self.size-1):
+				cell.neighbors.append(self.cells[idx, idy+1])
 
 		self.iterate(attach_neighbor)
 
 		self.future_cells = np.copy(self.cells)
 
 
+
 	def apply_external_fields(self):
-
-		self.f = self.parameters.epsilon_0 * self.parameters.force_fields[0].get_strength(self.current_step*self.parameters.dt) - self.cells[0].P
-
+		strength = self.parameters.epsilon_0 * self.parameters.force_fields[0].get_strength(self.current_step*self.parameters.dt)
+		self.f = strength
 
 	def apply_diffusion(self):
 		def laplace(cell, observable):
@@ -66,28 +73,27 @@ class grid:
 		diffusion_coefficients = np.array([getattr(self.constants, stuff) for stuff in ['D_na', 'D_nb', 'D_nc']])
 		polarization_diffusion_coefficients = np.array([getattr(self.constants, stuff) for stuff in ['D_Pa', 'D_Pb', 'D_Pc']])
 
-		def diffuse(cell, idx):
+		def diffuse(cell, idx, idy):
 			n_laplaces = np.array([laplace(cell, observable) for observable in concentrations])
 			n_deltas = n_laplaces * diffusion_coefficients * self.parameters.dt
 			p_laplaces = np.array([laplace(cell, observable) for observable in polarizations])
 			p_deltas = p_laplaces * polarization_diffusion_coefficients * self.parameters.dt
 
 			for obs, delta in zip(concentrations, n_deltas):
-				setattr(self.future_cells[idx], obs, getattr(cell, obs) + delta)
+				setattr(self.future_cells[idx, idy], obs, getattr(cell, obs) + delta)
 
 			for obs, delta in zip(polarizations, p_deltas):
-				setattr(self.future_cells[idx], obs, getattr(cell, obs) + delta)
+				setattr(self.future_cells[idx, idy], obs, getattr(cell, obs) + delta)
 
 		self.iterate(diffuse)
 
 	def internal_update(self):
+		self.iterate(lambda cell, idx, idy: cell.internal_update(self.f) ) 	#2D
 
-		self.iterate(lambda cell, idx: cell.internal_update(self.f) )
+		#def set_future(cell, idx, idy):		#2D
+		#	self.future_cells[idx, idy] = cell
 
-		def set_future(cell, idx):
-			self.future_cells[idx] = cell
-
-		self.iterate(set_future)
+		#self.iterate(set_future)
 
 	def make_future_happen(self):
 		self.current_step += 1
@@ -96,7 +102,7 @@ class grid:
 	def evolve(self):
 		self.internal_update()
 		self.apply_external_fields()
-		#self.apply_diffusion()						
+		self.apply_diffusion()
 		self.make_future_happen()
 
 	def save(self, filename, verbose):
@@ -117,26 +123,23 @@ class grid:
 		if verbose : print("loaded file", filename)
 
 
-
 class analyze:
 	def __init__(self, grid):
 		self.chi = 0
-
 		self.chi_accumulated = 0
-
 		self.grid = grid
-
 		self.counter = 0
 
+	# assuming the electrical field is in x-direction
 	def calculate_dielectric_response(self):
 		self.chi = 0
 		self.counter = 0
 
-		def collect_chi(cell, idx):
-			self.chi += abs(cell.P)
+		def collect_chi(cell, idx, idy):
+			self.chi += abs(cell.P[1])
 
 		self.grid.iterate(collect_chi)
-		self.chi = self.chi / self.grid.size
+		self.chi = self.chi / self.grid.size**2
 
 		self.chi_accumulated += self.chi
 
@@ -145,8 +148,7 @@ class analyze:
 		self.P_t = 0.0
 
 		def collect_P(cell, idx):
-			if cell.E != 0:
-				self.P_t += cell.P
+			self.P_t += cell.P
 
 		self.grid.iterate(collect_P)
 
@@ -161,14 +163,14 @@ class analyze:
 
 		print(self.mass)
 
+	# 2D version
 	def get_observables(self):
-		obs = np.empty([5, self.grid.size])
-		def extract_obs(cell, idx):
-			obs[0, idx] = cell.n_a
-			obs[1, idx] = 2*cell.n_b
-			obs[2, idx] = 3*cell.n_c
-			obs[3, idx] = cell.E
-			obs[4, idx] = cell.P
-
+		obs = np.empty([5, self.grid.size, self.grid.size])
+		def extract_obs(cell, idx, idy):
+			obs[0, idx, idy] = cell.n_a
+			obs[1, idx, idy] = 2*cell.n_b
+			obs[2, idx, idy] = 3*cell.n_c
+			obs[3, idx, idy] = cell.E
+			obs[4, idx, idy] = cell.P
 		self.grid.iterate(extract_obs)
 		return obs

@@ -50,6 +50,13 @@ simple = constants(
 					tau_a = 1.0, tau_b = 1.0, tau_c = 1.0,
 					I_a = 10, I_b = 10, I_c = 10)
 
+simple_with_Peq = constants(
+					k_aab0 = 0, k_baa0 = 0, k_abc0 = 0, k_cab0 = 0, k_aaac0 = 0, k_caaa0 = 0,
+					alpha_aab = 0, alpha_baa = 0, alpha_abc = 0, alpha_cab = 0, alpha_aaac = 0, alpha_caaa = 0,
+					epsilon_ra = 1.0, epsilon_rb = 2.0, epsilon_rc = 3.0,
+					P_eq_a = 1.0, P_eq_b = 1.0, P_eq_c = 1.0,
+					tau_a = 1.0, tau_b = 1.0, tau_c = 1.0,
+					I_a = 10, I_b = 10, I_c = 10)
 
 ############ Mono-Alcohol Section ############
 
@@ -69,18 +76,35 @@ monoalcohol = constants(
 					tau_a = 1.0, tau_b = 4.0, tau_c = 16.0,
 					I_a = 1.0, I_b = 2.0, I_c = 3.0)
 
+monoalcohol_Peqd = constants(
+					k_aab0 = jr, k_baa0 = dr, k_abc0 = jr, k_cab0 = dr, k_aaac0 = jr, k_caaa0 = dr,
+					alpha_aab = ff, alpha_baa = -ff, alpha_abc = ff, alpha_cab = -ff, alpha_aaac = ff, alpha_caaa = -ff,
+					epsilon_ra = 1.0, epsilon_rb = 3, epsilon_rc = 5,
+					P_eq_a = 0.5, P_eq_b = 1.0, P_eq_c = 2.0,
+					tau_a = 1.0, tau_b = 4.0, tau_c = 16.0,
+					I_a = 1.0, I_b = 2.0, I_c = 3.0)
+
+monoalcohol_same_viscosity = constants(
+					k_aab0 = jr, k_baa0 = dr, k_abc0 = jr, k_cab0 = dr, k_aaac0 = jr, k_caaa0 = dr,
+					alpha_aab = ff, alpha_baa = -ff, alpha_abc = ff, alpha_cab = -ff, alpha_aaac = ff, alpha_caaa = -ff,
+					epsilon_ra = 1.0, epsilon_rb = 3, epsilon_rc = 5,
+					P_eq_a = 0.5, P_eq_b = 1.0, P_eq_c = 2.0,
+					tau_a = 1.0, tau_b = 1.0, tau_c = 1.0,
+					I_a = 1.0, I_b = 1.0, I_c = 1.0)
+
 
 ############ Experimental Materials Section ############
 
 ff = 0.0
-dr = 0.5
+jr = 0.25
+dr = 0.25
 
 arbitrary = constants(
 					k_aab0 = jr, k_baa0 = dr, k_abc0 = jr, k_cab0 = dr, k_aaac0 = jr, k_caaa0 = dr,
 					alpha_aab = ff, alpha_baa = -ff, alpha_abc = ff, alpha_cab = -ff, alpha_aaac = ff, alpha_caaa = -ff,
 					epsilon_ra = 1.0, epsilon_rb = 3, epsilon_rc = 5,
 					P_eq_a = 1.0, P_eq_b = 1.0, P_eq_c = 1.0,
-					tau_a = 4.0, tau_b = 8.0, tau_c = 16.0,
+					tau_a = 1.0, tau_b = 4.0, tau_c = 16.0,
 					I_a = 1.0, I_b = 2.0, I_c = 3.0)
 
 
@@ -123,16 +147,19 @@ class cell (object):
 		# electrical field at cell
 		self.E = Efield
 
-		# PE alignment
-		PE_align = np.dot(self.P, self.E + self.dipolar_field)
+		# P-E alignment
+		P_a_align = np.dot(self.P_a, self.E + self.dipolar_field)
+		P_b_align = np.dot(self.P_b, self.E + self.dipolar_field)
+		P_c_align = np.dot(self.P_c, self.E + self.dipolar_field)
 
 		# reaction coefficients
-		k_aab = k_aab0 + alpha_aab * PE_align
-		k_baa = k_baa0 + alpha_baa * PE_align
-		k_abc = k_abc0 + alpha_abc * PE_align
-		k_cab = k_cab0 + alpha_cab * PE_align
-		k_caaa = k_caaa0 + alpha_caaa * PE_align
-		k_aaac = k_aaac0 + alpha_aaac * PE_align
+		k_aab = k_aab0 + alpha_aab * P_a_align
+		k_baa = k_baa0 + alpha_baa * P_b_align
+		k_abc = k_abc0 + alpha_abc * (P_a_align+P_b_align)/2
+		k_cab = k_cab0 + alpha_cab * P_c_align
+		k_aaac = k_aaac0 + alpha_aaac * P_a_align
+		k_caaa = k_caaa0 + alpha_caaa * P_c_align
+
 
 		if k_aab < 0:
 			k_aab = 0
