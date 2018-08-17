@@ -29,9 +29,9 @@ class grid2D:
 			self.P_a = 0.1
 			self.P_b = 0.1
 			self.P_c = 0.1
-			self.n_a = 0.66 + random.uniform(-rnd, rnd)
-			self.n_b = 0.10 + random.uniform(-rnd, rnd)
-			self.n_c = 0.04 + random.uniform(-rnd, rnd)
+			self.n_a = 0.54 + random.uniform(-rnd, rnd)
+			self.n_b = 0.15 + random.uniform(-rnd, rnd)
+			self.n_c = 0.045 + random.uniform(-rnd, rnd)
 			return self
 
 		#2D
@@ -168,8 +168,8 @@ class analyze:
 		obs = np.empty([5, self.grid.size, self.grid.size])
 		def extract_obs(cell, idx, idy):
 			obs[0, idx, idy] = cell.n_a
-			obs[1, idx, idy] = 2*cell.n_b
-			obs[2, idx, idy] = 3*cell.n_c
+			obs[1, idx, idy] = cell.n_b
+			obs[2, idx, idy] = cell.n_c
 			obs[3, idx, idy] = cell.E
 			obs[4, idx, idy] = cell.P
 		self.grid.iterate(extract_obs)

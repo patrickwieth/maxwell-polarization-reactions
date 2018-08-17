@@ -15,7 +15,7 @@ args = parser.parse_args()
 size = 15
 freq = 0.1
 
-used_material = material.simple
+used_material = material.monoalcohol_Peqd
 E_field = environment.external_field(strength=0.1, frequency=freq, wave_length=50)
 env = environment.simulation_parameters(epsilon_0 = 1, dx = 1.0, dt = 0.01/freq, external_fields = [E_field])
 
@@ -71,7 +71,11 @@ def updatefig(num, Q, X, Y):
 	U = state[3, X, Y]
 	V = state[4, X, Y]
 
-	Q.set_UVC(U,V)
+	max_c = np.amax(state[2, :, :])
+	min_c = np.amin(state[2, :, :])
+	C = (state[2, X, Y]-min_c) / (max_c-min_c)
+
+	Q.set_UVC(U,V,C)
 
 	#print(state)
 	print(simulation.current_step)

@@ -61,11 +61,11 @@ monoalcohol = constants(
 					D_na = 0.00028, D_nb = 0.05, D_nc = 0.05, D_Pa = 0.00028, D_Pb = 0.05, D_Pc = 0.05)
 
 arbitrary = constants(
-					k_aab0 = 0.004, k_baa0 = 0.5, k_abc0 = 0.005, k_cab0 = 0.005, k_caaa0 = 0.004, k_aaac0 = 0.0001,
-					alpha_aab = 0.3, alpha_baa = -0.3, alpha_abc = 0.3, alpha_cab = -0.3, alpha_aaac = 0.3, alpha_caaa = -0.3,
-					epsilon_ra = 1.0, epsilon_rb = 10.0, epsilon_rc = 100.0,
-					tau_a = 1.0, tau_b = 2.0, tau_c = 3.0,
-					D_na = 0.00028, D_nb = 0.05, D_nc = 0.05, D_Pa = 0, D_Pb = 0, D_Pc = 0)
+					k_aab0 = 0.01, k_baa0 = 0.1, k_abc0 = 0.01, k_cab0 = 0.12, k_aaac0 = 0.01, k_caaa0 = 0.09,
+					alpha_aab = 0.5, alpha_baa = -0.5, alpha_abc = 0.5, alpha_cab = -0.5, alpha_aaac = 0.5, alpha_caaa = -0.5,
+					epsilon_ra = 1.0, epsilon_rb = 3.0, epsilon_rc = 10.0,
+					tau_a = 0.05, tau_b = 0.1, tau_c = 0.2,
+					D_na = 0.00028, D_nb = 0.03, D_nc = 0.05, D_Pa = 0, D_Pb = 0, D_Pc = 0)
 
 
 class cell (object):
@@ -113,22 +113,22 @@ class cell (object):
 
 		if k_aab < 0:
 			k_aab = 0
-			#print("k_aab < 0")
+			print("k_aab < 0")
 		if k_baa < 0:
 			k_baa = 0
-			#print("k_baa < 0")
+			print("k_baa < 0")
 		if k_abc < 0:
 			k_abc = 0
-			#print("k_abc < 0")
+			print("k_abc < 0")
 		if k_cab < 0:
 			k_cab = 0
-			#print("k_cab < 0")
+			print("k_cab < 0")
 		if k_caaa < 0:
 			k_caaa = 0
-			#print("k_caaa < 0")
+			print("k_caaa < 0")
 		if k_aaac < 0:
 			k_aaac = 0
-			#print("k_aaac < 0")
+			print("k_aaac < 0")
 
 
 		r_1 = k_aab * self.n_a**2 - k_baa * self.n_b
