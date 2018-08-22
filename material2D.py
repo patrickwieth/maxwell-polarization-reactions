@@ -80,7 +80,7 @@ monoalcohol_Peqd = constants(
 					k_aab0 = jr, k_baa0 = dr, k_abc0 = jr, k_cab0 = dr, k_aaac0 = jr, k_caaa0 = dr,
 					alpha_aab = ff, alpha_baa = -ff, alpha_abc = ff, alpha_cab = -ff, alpha_aaac = ff, alpha_caaa = -ff,
 					epsilon_ra = 1.0, epsilon_rb = 3, epsilon_rc = 5,
-					P_eq_a = 0.5, P_eq_b = 1.0, P_eq_c = 2.0,
+					P_eq_a = 0.4, P_eq_b = 0.8, P_eq_c = 1.2,
 					tau_a = 1.0, tau_b = 4.0, tau_c = 16.0,
 					I_a = 1.0, I_b = 2.0, I_c = 3.0)
 

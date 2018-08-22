@@ -73,12 +73,16 @@ def updatefig(num, Q, X, Y):
 
 	max_c = np.amax(state[2, :, :])
 	min_c = np.amin(state[2, :, :])
-	C = (state[2, X, Y]-min_c) / (max_c-min_c)
 
-	Q.set_UVC(U,V,C)
+	if max_c == min_c:
+		C = 1
+	else:
+		C = (state[2, X, Y]-min_c) / (max_c-min_c)
+
+	Q.set_UVC(U,V,C)	# C: yellow = max, purple = min
 
 	#print(state)
-	print(simulation.current_step)
+	print(simulation.current_step, "min/max:", min_c, max_c)
 
 	return Q,
 
