@@ -12,10 +12,10 @@ parser = argparse.ArgumentParser(description='Run a simulation of reaction-diffu
 parser.add_argument("--load", help="load a checkpoint")
 args = parser.parse_args()
 
-size = 15
+size = 25
 freq = 0.1
 
-used_material = material.monoalcohol_Peqd
+used_material = material.monoalcohol
 E_field = environment.external_field(strength=0.1, frequency=freq, wave_length=50)
 env = environment.simulation_parameters(epsilon_0 = 1, dx = 1.0, dt = 0.01/freq, external_fields = [E_field])
 

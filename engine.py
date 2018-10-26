@@ -52,8 +52,8 @@ class grid:
 
 	def apply_external_fields(self):
 
-		self.f = self.parameters.epsilon_0 * self.parameters.force_fields[0].get_strength(self.current_step*self.parameters.dt) - self.cells[0].P
-
+		self.f = self.parameters.epsilon_0 * self.parameters.force_fields[0].get_strength(self.current_step*self.parameters.dt)
+		#print(self.f)
 
 	def apply_diffusion(self):
 		def laplace(cell, observable):
@@ -96,7 +96,7 @@ class grid:
 	def evolve(self):
 		self.internal_update()
 		self.apply_external_fields()
-		#self.apply_diffusion()						
+		#self.apply_diffusion()
 		self.make_future_happen()
 
 	def save(self, filename, verbose):

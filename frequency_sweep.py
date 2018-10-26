@@ -15,7 +15,7 @@ args = parser.parse_args()
 
 size = 1
 steps = int(10000)
-used_material = material.twopeaks
+used_material = material.simple
 
 simulation = engine.grid(material, used_material, environment.arbitrary, size)
 
@@ -36,12 +36,11 @@ else:
 
 for n in range(150):
 
-	freq = 0.0000002 * 1.1**n
+	freq = 0.00005 * 1.1**n
 	period_t = 2 * 3.1415 / freq
 
-	E_field = environment.external_field(strength=1, frequency=freq, wave_length=50)
-	sweep_environment = environment.simulation_parameters(epsilon_0 = 1, dx = 0.1, dt = period_t/100000000, external_fields = [E_field])
-
+	E_field = environment.external_field(strength=0.1, frequency=freq, wave_length=50)
+	sweep_environment = environment.simulation_parameters(epsilon_0 = 1, dx = 0.1, dt = period_t/100000, external_fields = [E_field])
 
 	simulation = engine.grid(material, used_material, sweep_environment, size)
 	simulation.load("equilibrium", False)

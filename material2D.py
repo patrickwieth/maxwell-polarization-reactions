@@ -190,10 +190,17 @@ class cell (object):
 		dn_b =    r_1 	- r_2
 		dn_c = 			  r_2 + r_3
 
-		# delta polarization (relaxtion of P to E and polarization from reactions?)
+		# delta polarization (relaxation of P to E and polarization from reactions?)
+		'''
 		dP_a = ( self.n_a*epsilon_ra/epsilon_rges * epsilon_0 * self.E - self.P_a + self.n_a*epsilon_ra/epsilon_rges * P_eq_a * self.P_a / np.linalg.norm(self.P_a) ) / tau_a
 		dP_b = ( self.n_b*epsilon_rb/epsilon_rges * epsilon_0 * self.E - self.P_b + self.n_b*epsilon_ra/epsilon_rges * P_eq_b * self.P_b / np.linalg.norm(self.P_b) ) / tau_b
 		dP_c = ( self.n_c*epsilon_rc/epsilon_rges * epsilon_0 * self.E - self.P_c + self.n_c*epsilon_ra/epsilon_rges * P_eq_c * self.P_c / np.linalg.norm(self.P_c) ) / tau_c
+		'''
+
+		# delta polarization (relaxation of P to E and polarization from reactions?)
+		dP_a = ( self.n_a*epsilon_ra * epsilon_0 * self.E - self.P_a + self.n_a*epsilon_ra/epsilon_rges * P_eq_a * self.P_a / np.linalg.norm(self.P_a) ) / tau_a
+		dP_b = ( self.n_b*epsilon_rb * epsilon_0 * self.E - self.P_b + self.n_b*epsilon_ra/epsilon_rges * P_eq_b * self.P_b / np.linalg.norm(self.P_b) ) / tau_b
+		dP_c = ( self.n_c*epsilon_rc * epsilon_0 * self.E - self.P_c + self.n_c*epsilon_ra/epsilon_rges * P_eq_c * self.P_c / np.linalg.norm(self.P_c) ) / tau_c
 
 		# delta rotation (relaxation to 0 and torque)
 		dRot_a = ( -self.rot_a / tau_a + np.cross(self.P_a, self.dipolar_field + self.E) ) / I_a

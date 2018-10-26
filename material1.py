@@ -40,8 +40,8 @@ class constants:
 
 
 simple = constants(
-					k_aab0 = 0, k_baa0 = 0, k_abc0 = 0, k_cab0 = 0, k_caaa0 = 0, k_aaac0 = 0,
-					alpha_aab = 0.0, alpha_baa = 0.0, alpha_abc = 0.0, alpha_cab = -0.0, alpha_aaac = 0, alpha_caaa = 0,
+					k_aab0 = 0.0, k_baa0 = 0.0, k_abc0 = 0.0, k_cab0 = 0.0, k_caaa0 = 0.0, k_aaac0 = 0.0,
+					alpha_aab = 0.0, alpha_baa = 0.0, alpha_abc = 0.0, alpha_cab = -0.0, alpha_aaac = 0.0, alpha_caaa = 0.0,
 					epsilon_ra = 1.0, epsilon_rb = 2.0, epsilon_rc = 3.0,
 					tau_a = 1.0, tau_b = 1.0, tau_c = 1.0,
 					D_na = 0.1, D_nb = 0.1, D_nc = 0.1, D_Pa = 0.1, D_Pb = 0.1, D_Pc = 0.1)
@@ -49,15 +49,15 @@ simple = constants(
 twopeaks = constants(
 					k_aab0 = 0, k_baa0 = 0, k_abc0 = 0, k_cab0 = 0, k_caaa0 = 0, k_aaac0 = 0,
 					alpha_aab = 0.0, alpha_baa = 0.0, alpha_abc = 0.0, alpha_cab = -0.0, alpha_aaac = 0, alpha_caaa = 0,
-					epsilon_ra = 1.0, epsilon_rb = 30.0, epsilon_rc = 0.0,
-					tau_a = 1.0, tau_b = 100.0, tau_c = 1.0,
+					epsilon_ra = 1.0, epsilon_rb = 10.0, epsilon_rc = 0.0,
+					tau_a = 1, tau_b = 100.0, tau_c = 1.0,
 					D_na = 0.1, D_nb = 0.1, D_nc = 0.1, D_Pa = 0.1, D_Pb = 0.1, D_Pc = 0.1)
 
 monoalcohol = constants(
 					k_aab0 = 0.004, k_baa0 = 0.5, k_abc0 = 0.005, k_cab0 = 0.005, k_caaa0 = 0.004, k_aaac0 = 0.0001,
 					alpha_aab = 0.3, alpha_baa = -0.3, alpha_abc = 0.3, alpha_cab = -0.3, alpha_aaac = 0.3, alpha_caaa = -0.3,
 					epsilon_ra = 1.0, epsilon_rb = 3.0, epsilon_rc = 9.0,
-					tau_a = 1, tau_b = 3.0, tau_c = 5.0,
+					tau_a = 1.0, tau_b = 2.0, tau_c = 3.0,
 					D_na = 0.00028, D_nb = 0.05, D_nc = 0.05, D_Pa = 0.00028, D_Pb = 0.05, D_Pc = 0.05)
 
 arbitrary = constants(
@@ -98,7 +98,8 @@ class cell (object):
 	def internal_update_in_general(self, epsilon_0, k_aab0, k_baa0, k_abc0, k_cab0, k_caaa0, k_aaac0, alpha_aab, alpha_baa, alpha_abc, alpha_cab, alpha_aaac, alpha_caaa, epsilon_ra, epsilon_rb, epsilon_rc, tau_a, tau_b, tau_c, dt, q):
 
 		epsilon_rges = self.n_a * epsilon_ra + self.n_b * epsilon_rb + self.n_c * epsilon_rc
-		self.E = (q - self.P * epsilon_rges)/ epsilon_0
+		#self.E = (q - self.P * epsilon_rges)/ epsilon_0
+		self.E = q
 
 		# calculate updates
 
@@ -110,6 +111,7 @@ class cell (object):
 		k_cab = k_cab0 + alpha_cab * P_squared
 		k_caaa = k_caaa0 + alpha_caaa * P_squared
 		k_aaac = k_aaac0 + alpha_aaac * P_squared
+
 
 		if k_aab < 0:
 			k_aab = 0
